@@ -1,0 +1,22 @@
+---
+access_admin_users:
+  - name: sejo
+    key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBDFKJQVfenACYXmanW9k9+EC2pb8b/AGlrjw1BsheIp jochen@sejo-it.be
+    full: Jochen Maes
+    shell: /bin/bash
+    groups:
+      - admin
+      - wheel
+    # test
+    password_hash: $6$72PSUsnNIRFFRjyp$slv0TRe/ROcEGfv/69JNiITPfJGszFdULXToohmvvUzNavI2i7hQH.uq2dbY/ZxGDEx/cyy452tpN0Uvt3Yjy0
+access_users:
+  # add application users here as well
+  - name: consul
+    shell: /bin/nologin
+access_admin_group: admin
+# access_user_groups has format as such:
+# - name: test_group
+#    users:
+#      - bleh
+#      - blah
+access_user_groups: []

@@ -1,0 +1,4 @@
+---
+- hosts: all:!bastion
+  roles:
+    - role: promtail

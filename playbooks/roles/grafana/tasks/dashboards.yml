@@ -1,0 +1,61 @@
+---
+# thank you https://github.com/cloudalchemy/ansible-grafana for the base of this.
+# I changed and made it simpler for our use-case
+- block:
+    - name: generate temp directory
+      ansible.builtin.tempfile:
+        state: directory
+      register: tmp_dir
+      changed_when: false
+
+    - name: get grafana dashboards from ze web
+      ansible.builtin.get_url:
+        url: "https://grafana.com/api/dashboards/{{ item.dashboard_id }}/revisions/{{ item.revision_id }}/download"
+        dest: "{{ tmp_dir.path }}/{{ item.dashboard_id }}.json"
+      loop: "{{ grafana_dashboards }}"
+      register: downloaded_dashboards
+      until: downloaded_dashboards is succeeded
+      retries: 10
+      delay: 5
+      when: grafana_dashboards | length > 0
+
+    - name: change data source name in dashboard
+      ansible.builtin.replace:
+        dest: "{{ tmp_dir.path }}/{{ item.dashboard_id }}.json"
+        regexp: '"(?:\${)?DS_[A-Z0-9_-]+(?:})?"'
+        replace: '"{{ item.datasource }}"'
+      changed_when: false
+      loop: "{{ grafana_dashboards }}"
+      when: grafana_dashboards | length > 0
+  become: false
+  delegate_to: localhost
+
+- name: loop until grafana is up and running
+  ansible.builtin.uri:
+    url: "http://grafana.service.consul:3000/api/health"
+    method: GET
+  register: result
+  until: result.status ==200
+  retries: 20
+  delay: 10
+
+- name: debug
+  ansible.builtin.debug:
+    msg: "{{ lookup('fileglob', tmp_dir.path + '/*', wantlist=True) }}"
+
+- name: import dashboards
+  ansible.builtin.uri:
+    url: "http://grafana.service.consul:3000/api/dashboards/db"
+    user: "admin"
+    password: "{{ grafana_default_pass | default('test') }}"
+    force_basic_auth: true
+    method: POST
+    body_format: json
+    body: >
+      {
+        "dashboard": {{ lookup("file", item) }},
+        "overwrite": true,
+        "message": "Updated by ansible"
+      }
+  loop: "{{ lookup('fileglob', tmp_dir.path + '/*', wantlist=True)}}"
+

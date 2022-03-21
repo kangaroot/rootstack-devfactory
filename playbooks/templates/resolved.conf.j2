@@ -1,0 +1,4 @@
+[Resolve]
+DNS={% for host in groups['admin'] %}{% if loop.index0 < 2 %}{{ hostvars[host].vm_ip }} {% endif %}{% endfor %}
+
+Domains=~consul

@@ -1,0 +1,12 @@
+---
+- name: set networking config
+  ansible.builtin.template:
+    src: "{{ ansible_distribution | lower }}_static.j2"
+    dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+  become: true
+  register: net_change
+
+- name: reboot system
+  ansible.builtin.reboot:
+  become: true
+  when: net_change.changed

@@ -1,0 +1,15 @@
+---
+- hosts: all
+  pre_tasks:
+    - name: disable firewalld
+      ansible.builtin.service:
+        name: firewalld
+        state: stopped
+        enabled: false
+      become: true
+  roles:
+    - role: access
+    - role: static_ip
+    - role: hostname
+    - role: nfs
+      when: "'nfs' in group_names"

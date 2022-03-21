@@ -1,0 +1,92 @@
+---
+- name: create group
+  ansible.builtin.group:
+    name: loki
+    state: present
+  become: true
+
+- name: create loki user
+  ansible.builtin.user:
+    name: loki
+    group: loki
+    shell: /bin/bash
+    state: present
+  become: true
+
+- name: create config folder
+  ansible.builtin.file:
+    path: /etc/loki
+    state: directory
+    owner: loki
+    group: loki
+  become: true
+
+- name: version check on existing binary
+  ansible.builtin.command: loki --version
+  register: loki_bin_ver
+  changed_when: false
+  ignore_errors: true
+
+- block:
+  - name: download and extract binary
+    ansible.builtin.unarchive:
+      src:  https://github.com/grafana/loki/releases/download/v{{ loki_version }}/loki-linux-{{ pkg_arch_map[ansible_architecture] }}.zip
+      dest: "/usr/bin"
+      remote_src: true
+      owner: loki
+      group: loki
+    become: true
+
+  - name: rename binary
+    ansible.builtin.command:
+      cmd: mv /usr/bin/loki-{{ ansible_system | lower }}-{{ pkg_arch_map[ansible_architecture] }} /usr/bin/loki
+      creates: /usr/bin/loki
+    become: true
+  when: loki_bin_ver.failed or loki_version not in loki_bin_ver.stdout
+
+- name: configure loki
+  ansible.builtin.template:
+    src: loki.yaml.j2
+    dest: /etc/loki/loki.yaml
+    owner: loki
+    group: loki
+    mode: 0660
+  become: true
+
+- name: list buckets
+  ansible.builtin.command:
+    cmd: mc ls minio
+  changed_when: false
+  register: known_buckets
+  become: true
+  when: "'loki_server' in group_names"
+
+- name: create bucket if needed
+  ansible.builtin.command:
+    cmd: mc mb minio/loki
+  become: true
+  when:
+    - "'loki_server' in group_names"
+    - "'loki/' not in known_buckets.stdout"
+
+- name: create systemd service
+  ansible.builtin.template:
+    src: loki.service.j2
+    dest: /usr/lib/systemd/system/loki.service
+  become: true
+  when: "'loki' in group_names"
+  notify: start and enable loki
+
+- name: register loki into consul
+  community.general.consul:
+    host: "{{ vm_ip }}"
+    service_name: loki
+    service_address: "{{ vm_ip }}"
+    service_port: 8880
+    interval: 60s
+    http: "http://{{ vm_ip }}:8880/ready"
+    state: present
+    tags:
+      - admin
+      - loki
+  when: "'loki_server' in group_names"

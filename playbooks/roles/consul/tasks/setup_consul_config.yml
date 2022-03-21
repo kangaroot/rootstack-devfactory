@@ -1,0 +1,15 @@
+---
+- name: get the encrypt_key
+  ansible.builtin.command:
+    cmd: cat /etc/consul.d/gossip.key
+  register: gossip
+  become: true
+  changed_when: false
+
+- name: set the consul.json config file
+  ansible.builtin.template:
+    src: consul.json.j2
+    dest: /etc/consul.d/consul.json
+    mode: 0600
+    owner: consul
+  become: true

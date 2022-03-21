@@ -1,0 +1,150 @@
+job "traefik" {
+    datacenters = ["{{ nomad_datacenter }}"]
+    type = "service"
+
+    group "clients" {
+        affinity {
+            attribute = "${meta.admin}"
+            value = "1"
+            weight = 100
+        }
+        count = 3
+
+        network {
+            port "http" {
+                static = 80
+                host_network = "public"
+            }
+            port "traefik" {
+                static = 8081
+                host_network = "public"
+            }
+            port "https" {
+                static = 443
+                host_network = "public"
+            }
+        }
+
+        task "traefik-admin" {
+            env {
+                PORT = "80"
+                NODE_IP = "{{ vm_ip }}"
+            }
+
+            driver = "docker"
+
+            config {
+                image = "traefik:v2.5.4"
+                ports = ["http", "traefik"]
+                network_mode = "host"
+                volumes = [
+                    "local/traefik.toml:/etc/traefik/traefik.toml",
+                    "local/dynamic.yml:/etc/traefik/dynamic.yml",
+                    {% for dirs in job_fact.volumes %}
+                    "{{ dirs.dir }}:{{ dirs.container_dir }}",
+                    {% endfor %}
+                ]
+                {% if 'aarch64' != ansible_architecture %}
+                logging {
+                    type = "loki"
+                }
+                {% endif %}
+            }
+
+            service {
+                name = "traefik-admin"
+                port = "traefik"
+                tags = [
+                  "traefik","admin",
+                ]
+
+                check {
+                    name = "traefik http alive"
+                    type = "http"
+                    path = "/ping"
+                    interval = "10s"
+                    timeout = "2s"
+                }
+            }
+
+            template {
+        data = <<EOF
+[accessLog]
+
+[metrics]
+  [metrics.prometheus]
+
+
+[log]
+level = "DEBUG"
+
+[entryPoints]
+    [entryPoints.http]
+    address = ":80"
+    [entryPoints.traefik]
+    address = ":8081"
+    [entryPoints.https]
+    address = ":443"
+[ping]
+entryPoint = "traefik"
+
+[api]
+    dashboard = true
+    insecure  = true
+
+# Enable Consul Catalog configuration backend.
+[providers.consulCatalog]
+    prefix           = "traefik"
+    exposedByDefault = false
+    defaultRule      = {% raw %}"Host(`{{"{{ .Name }}"}}.service.{% endraw %}{{ nomad_datacenter }}{% raw %}.consul`) || Host(`{{"{{ .Name }}"}}.service.consul`) || Host(`{{"{{ .Name }}"}}.{% endraw %}{{ zone }}{%raw %}`)"{% endraw %}
+
+    [providers.consulCatalog.endpoint]
+      address = "{{ vm_ip }}:8500"
+      scheme  = "http"
+# Enable Consul normal config backend
+[providers.consul]
+    rootKey = "{{ consul_dc_name}}_traefik"
+    endpoints = ["{{ vm_ip }}:8500"]
+[providers.file]
+    filename = "/etc/traefik/dynamic.yml"
+{% if job_fact.certificate_email is defined %}
+[certificatesResolvers.{{ consul_dc_name }}.acme]
+      email =  "{{ job_fact.certificate_email }}"
+      storage = "/config/{{ nomad_datacenter }}.json"
+      # comment for production
+      caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+{% endif %}
+EOF
+
+            destination = "local/traefik.toml"
+            }
+            template {
+              destination = "local/dynamic.yml"
+              data = <<EOF
+{% if job_fact.default_cert is defined %}
+tls:
+  options:
+    default:
+      minVersion: "VersionTLS13"
+  certificates:
+    certFile: "/config/{{ dc }}.cert"
+    keyFile: "/config/{{ dc }}.key"
+
+  stores:
+    default:
+      defaultCertificate:
+        certFile: "/config/{{ dc }}.cert"
+        keyFile: "/config/{{ dc }}.key"
+{% endif %}
+
+EOF
+
+            }
+
+            resources {
+                cpu    = 100
+                memory = 128
+            }
+        }
+    }
+}

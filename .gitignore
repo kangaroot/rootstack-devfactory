@@ -1,0 +1,4 @@
+*.un~
+*.swp
+*.pyc
+venv/

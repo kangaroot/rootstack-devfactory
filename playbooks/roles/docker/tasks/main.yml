@@ -1,0 +1,40 @@
+---
+- name: setup docker
+  ansible.builtin.include_tasks: "{{ ansible_distribution | lower}}.yml"
+
+- name: add users to docker group
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: docker
+    append: true
+    state: present
+  loop: "{{ access_admin_users }}"
+  become: true
+
+
+# Do not install the loki plugin on arm as it's not supported.
+
+- block:
+  - name: debug docker_plugins
+    ansible.builtin.debug:
+      msg: "{{ docker_plugins }}"
+
+  - name: install plugins
+    ansible.builtin.include_tasks: docker_plugin.yml
+    loop: "{{ lookup('vars', 'docker_plugins') }}"
+
+  - name: set docker daemon file with configs
+    ansible.builtin.template:
+      src: daemon.json.j2
+      dest: /etc/docker/daemon.json
+    become: true
+    register: docker_daemon_config
+
+  - name: restart docker when daemon cfg changed
+    ansible.builtin.service:
+      name: docker
+      state: restarted
+    become: true
+    when: docker_daemon_config.changed
+  when: "'aarch64' != ansible_architecture"
+

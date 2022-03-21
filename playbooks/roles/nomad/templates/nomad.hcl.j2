@@ -1,0 +1,59 @@
+datacenter = "{{ nomad_datacenter }}"
+data_dir = "{{ nomad_data_dir }}"
+bind_addr = "{{ vm_ip }}"
+name = "{{ vm_name }}"
+advertise {
+  http = "{{ vm_ip }}"
+  rpc = "{{ vm_ip }}"
+  serf = "{{ vm_ip }}"
+}
+
+{% if 'admin' in group_names %}
+server {
+  enabled = true
+  bootstrap_expect = 3
+  retry_join = [{% for host in groups['admin'] %}"{{ hostvars[host]['vm_ip'] }}"{% if not loop.last %},{% endif %}{% endfor %}]
+}
+{% endif %}
+client {
+  enabled = true
+  host_network "public" {
+    cidr = "{{ network_cidr }}"
+  }
+  meta {
+    admin = {{ "1" if 'admin' in group_names else "0" }}
+  }
+}
+consul {
+  address = "{{ vm_ip}}:8500"
+}
+plugin "docker" {
+  config {
+    volumes {
+      enabled = true
+      selinuxlabel = "z"
+    }
+    extra_labels = ["job_name", "job_id", "task_group_name", "task_name", "namespace", "node_name", "node_id"]
+    gc {
+      image       = true
+      image_delay = "3m"
+      container   = true
+
+      dangling_containers {
+        enabled        = true
+        dry_run        = false
+        period         = "5m"
+        creation_grace = "5m"
+      }
+    }
+
+    allow_privileged = true
+  }
+}
+telemetry {
+  collection_interval = "1s"
+  disable_hostname = true
+  prometheus_metrics = true
+  publish_allocation_metrics = true
+  publish_node_metrics = true
+}

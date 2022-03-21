@@ -1,0 +1,8 @@
+---
+# there is not an ansible solution for yum-config-manager that I found.
+# as the key is not published easily I thought it would be easier to use a shell command.
+- name: set the repository for consul
+  ansible.builtin.command:
+    cmd: dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+  changed_when: false
+  become: true

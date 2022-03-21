@@ -1,0 +1,69 @@
+---
+- name: Create admin group
+  ansible.builtin.group:
+    name: "{{ access_admin_group }}"
+    state: present
+  become: true
+
+- name: Create all groups
+  ansible.builtin.group:
+    name: "{{ item.name }}"
+    state: present
+  loop: "{{ access_user_groups }}"
+  when: access_user_groups is defined
+  become: true
+
+- name: debug this
+  ansible.builtin.debug:
+    msg: "{{ item.name }}"
+  loop: "{{ access_admin_users|flatten|zip(access_users)|flatten }}"
+
+- name: create users without password
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    comment: "{{ item.full | default(item.name) }}"
+    shell: "{{ item.shell | default('/bin/bash') }}"
+    groups: "{{ item.groups | default(omit) }}"
+  when: item.password_hash is not defined
+  loop: "{{ access_admin_users|flatten|zip(access_users)|flatten }}"
+  become: true
+
+- name: create users with password
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    comment: "{{ item.full }}"
+    shell: "{{ item.shell | default('/bin/bash') }}"
+    groups: "{{ item.groups | default(omit) }}"
+    password: "{{ item.password_hash }}"
+    update_password: "{{ item.update_password | default('always') }}"
+  when: item.password_hash is defined
+  loop: "{{ access_admin_users|flatten|zip(access_users)|flatten }}"
+  #no_log: true
+  become: true
+
+- name: ensure ssh folder exists
+  ansible.builtin.file:
+    path: "/home/{{ item.name }}/.ssh"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: 0700
+  become: true
+  with_flattened:
+    - "{{ access_admin_users }}"
+    - "{{ access_users }}"
+
+- name: set users sshkeys
+  ansible.builtin.lineinfile:
+    dest: "/home/{{ item.name }}/.ssh/authorized_keys"
+    regexp: "^{{ item.key }}"
+    line: "{{ item.key }}"
+    create: true
+    mode: 0600
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+  with_flattened:
+    - "{{ access_admin_users }}"
+    - "{{ access_users }}"
+  when: item.key is defined
+  become: true

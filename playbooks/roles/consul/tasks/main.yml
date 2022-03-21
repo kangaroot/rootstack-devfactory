@@ -1,0 +1,74 @@
+---
+- name: setup prerequisites
+  ansible.builtin.include_tasks: "prereq_{{ ansible_distribution|lower }}.yml"
+
+- name: setup python-consul
+  ansible.builtin.pip:
+    name: python-consul
+    state: latest
+    executable: /usr/bin/pip3
+  become: true
+
+- name: check if consul is the correct version
+  ansible.builtin.command:
+    cmd: "/usr/bin/consul"
+  register: consul_installed_version
+  changed_when: false
+  failed_when: false
+
+- block:
+    - name: Include base install
+      include_tasks: "install_{{ ansible_distribution|lower }}_binary.yml"
+  when: consul_installed_version is not defined or consul_version not in consul_installed_version.stdout
+
+- name: ensure the consul folders exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: consul
+    group: consul
+    mode: 0755
+  with_items:
+    - "{{ consul_install_path }}"
+    - "{{ consul_data_path }}"
+    - "/etc/consul.d/"
+  become: true
+
+- name: touch env file
+  ansible.builtin.file:
+    path: "/etc/consul.d/consul.env"
+    state: touch
+    owner: consul
+    group: consul
+    mode: 0770
+  become: true
+
+- name: setup key for encryption
+  include_tasks: "setup_encrypt_key.yml"
+  run_once: true
+
+- name: setup consul ca
+  include_tasks: "setup_ca.yml"
+  run_once: true
+
+- name: setup server cert
+  include_tasks: "setup_server_cert.yml"
+
+- name: setup client cert
+  include_tasks: "setup_client_cert.yml"
+
+- name: setup consul config
+  include_tasks: "setup_consul_config.yml"
+
+- name: enable and start consul
+  ansible.builtin.service:
+    name: consul
+    enabled: true
+    state: restarted
+  async: 600
+  poll: 5
+  become: true
+
+- name: setup iptables
+  include_tasks: "iptables.yml"
+  when: "'admin' in group_names"

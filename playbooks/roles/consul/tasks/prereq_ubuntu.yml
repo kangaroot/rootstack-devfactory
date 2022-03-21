@@ -1,0 +1,19 @@
+---
+- name: set apt key
+  ansible.builtin.apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    state: present
+  become: true
+
+- name: setup repository
+  ansible.builtin.apt_repository:
+    repo: deb [arch={{ pkg_arch_map[ansible_architecture] }}] https://apt.releases.hashicorp.com {{ ansible_distribution_release | lower }} main
+    filename: hashicorp
+    state: present
+  become: true
+
+- name: setup pip3
+  ansible.builtin.apt:
+    name: python3-pip
+    state: present
+  become: true

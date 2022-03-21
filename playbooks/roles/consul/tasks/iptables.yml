@@ -1,0 +1,29 @@
+---
+- name: set prerouting iptables for dns forward
+  ansible.builtin.iptables:
+    table: nat
+    chain: PREROUTING
+    protocol: "{{ item }}"
+    match: "{{ item }}"
+    jump: REDIRECT
+    destination_port: 53
+    to_ports: 8600
+  loop:
+    - tcp
+    - udp
+  become: true
+
+- name: set OUTPUT iptabless for dns forward
+  ansible.builtin.iptables:
+    table: nat
+    chain: OUTPUT
+    protocol: "{{ item }}"
+    match: "{{ item }}"
+    destination: "{{ vm_ip }}"
+    destination_port: 53
+    to_ports: 8600
+    jump: REDIRECT
+  loop:
+    - tcp
+    - udp
+  become: true

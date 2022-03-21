@@ -1,0 +1,17 @@
+---
+- name: get the mc client binary
+  ansible.builtin.get_url:
+    url: "https://dl.min.io/client/mc/release/{{ ansible_system | lower}}-{{ pkg_arch_map[ansible_architecture] }}/mc"
+    dest: /usr/bin/mc
+    mode: 0777
+  become: true
+
+- name: set correct alias
+  ansible.builtin.command:
+    cmd: mc alias set minio http://s3.service.consul:9000 {{ s3_access_key }} {{ s3_secret_key }}
+  become: true
+  #no_log: true
+  register: res
+  retries: 10
+  delay: 10
+  until: res.failed == false

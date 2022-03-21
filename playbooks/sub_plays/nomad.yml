@@ -1,0 +1,4 @@
+---
+- hosts: nomad
+  roles:
+    - role: nomad

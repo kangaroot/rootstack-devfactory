@@ -1,0 +1,60 @@
+---
+- name: create grafana group
+  ansible.builtin.group:
+    name: grafana
+    state: present
+  become: true
+
+# the container has for the grafana user uid 472!!
+- name: create grafana user
+  ansible.builtin.user:
+    name: grafana
+    uid: 472
+    state: present
+    group: grafana
+  become: true
+
+- name: create grafana folders
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item }}"
+    owner: grafana
+    group: grafana
+    mode: 0775
+  loop:
+    - /etc/grafana/provisioning/datasources
+    - /data/{{ ansible_nodename }}/grafana
+    - /var/lib/grafana/plugins
+    - /var/lib/grafana/
+  become: true
+
+- name: create config file
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+    owner: grafana
+    group: grafana
+    mode: 0660
+  become: true
+
+- name: create datasource files
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/grafana/provisioning/datasources/{{ item }}"
+    owner: grafana
+    group: grafana
+  become: true
+  loop:
+    - loki_ds.yaml
+    - prometheus_ds.yaml
+
+- name: add grafana nomad job
+  community.general.nomad_job:
+    host: "nomad.service.consul"
+    state: present
+    content: "{{ lookup('ansible.builtin.template', 'grafana.hcl.j2') }}"
+    use_ssl: false
+
+- name: Add dashboards from configs
+  import_tasks: dashboards.yml
+  tags: grafana_dashboards

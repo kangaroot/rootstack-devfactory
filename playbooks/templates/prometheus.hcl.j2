@@ -1,0 +1,110 @@
+job "prometheus" {
+    datacenters = ["{{ nomad_datacenter }}"]
+    type = "service"
+    group "prometheus" {
+        count = 1
+        network {
+            port "promport" {
+                static = 9090
+                host_network = "public"
+            }
+        }
+        task "prometheus" {
+            {% if job_fact.affinity_value is defined %}
+              constraint {
+                attribute = "${node.unique.name}"
+                value = "{{ job_fact['affinity_value'] }}"
+              }
+            {% endif %}
+            driver = "docker"
+            user = "root"
+            config {
+                image = "prom/prometheus"
+                ports = ["promport",]
+                network_mode = "host"
+                args = [
+                    "--config.file=/local/prometheus.yml",
+                    "--web.enable-admin-api"
+                ]
+                volumes = [
+                {% for dirs in job_fact.volumes %}
+                  "{{ dirs.dir }}:{{ dirs.container_dir }}",
+                {% endfor %}
+                ]
+            }
+            template {
+                data        = <<EOTC
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: 'self'
+    consul_sd_configs:
+      - server: '{{ vm_ip }}:8500'
+    relabel_configs:
+      - source_labels: [__meta_consul_service_metadata_external_source]
+        target_label: source
+        regex: (.*)
+        replacement: '$1'
+      - source_labels: [__meta_consul_service_id]
+        regex: '_nomad-task-([a-z0-9]*)-([a-z0-9]*)-([a-z0-9]*)-([a-z0-9]*)-([a-z0-9]*).*'
+        target_label:  'task_id'
+        replacement: '$1-$2-$3-$4-$5'
+      - source_labels: [__meta_consul_service]
+        target_label: job
+      - source_labels: ['__meta_consul_node']
+        regex:         '(.*)'
+        target_label:  'instance'
+        replacement:   '$1'
+      - source_labels: [job]
+        regex: 's3'
+        target_label:   '__metrics_path__'
+        replacement: '/minio/v2/metrics/node'
+      - source_labels: [job]
+        regex: "nomad-client"
+        target_label: '__metrics_path__'
+        replacement: '/v1/metrics'
+      - source_labels: [job]
+        regex: "consul-client"
+        target_label: '__metrics_path__'
+        replacement: '/v1/agent/metrics'
+      - source_labels: [job]
+        regex: "nomad-client"
+        target_label: '__param_format'
+        replacement: 'prometheus'
+      - source_labels: ['__meta_consul_tags']
+        regex: '(.*)actuator(.*)'
+        target_label: '__metrics_path__'
+        replacement: '/actuator/prometheus'
+      - source_labels: [job]
+        regex: "nomad$|consul$"
+        action: drop
+EOTC
+                destination = "/local/prometheus.yml"
+            }
+            resources {
+                cpu    = 200
+                memory = 200
+            }
+
+            service {
+                name = "prometheus"
+                port = "promport"
+                tags = ["admin", "monitoring"]
+
+                check {
+                    name     = "prometheus HTTP"
+                    type     = "http"
+                    path     = "/targets"
+                    interval = "5s"
+                    timeout  = "2s"
+
+                    check_restart {
+                        limit           = 2
+                        grace           = "60s"
+                        ignore_warnings = false
+                    }
+                }
+            }
+        }
+    }
+}

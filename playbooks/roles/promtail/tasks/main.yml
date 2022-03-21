@@ -1,0 +1,43 @@
+---
+- name: ensure promtail folder exists
+  ansible.builtin.file:
+    path: /etc/loki
+    state: directory
+  become: true
+- name: check for correct version of promtail
+  ansible.builtin.shell: promtail --version
+  register: promtail_running_version
+  ignore_errors: true
+
+- block: 
+  - name: unarchive and download the binary.
+    ansible.builtin.unarchive:
+      remote_src: true
+      src: https://github.com/grafana/loki/releases/download/v{{ promtail_version }}/promtail-{{ ansible_system | lower }}-{{ pkg_arch_map[ansible_architecture]}}.zip
+      dest: "/usr/bin/"
+    become: true
+
+  - name: rename binary
+    ansible.builtin.command:
+      cmd: mv /usr/bin/promtail-{{ ansible_system|lower }}-{{ pkg_arch_map[ansible_architecture] }} /usr/bin/promtail
+    become: true
+  when: promtail_running_version.failed or promtail_version not in promtail_running_version.stdout
+
+- name: place promtail main config
+  ansible.builtin.template:
+    src: promtail.yaml.j2
+    dest: /etc/loki/promtail.yaml
+  become: true
+
+- name: create promtail systemd
+  ansible.builtin.template:
+    src: promtail.service.j2
+    dest: /usr/lib/systemd/system/promtail.service
+  become: true
+
+- name: enable promtail service and start it
+  ansible.builtin.service:
+    name: promtail
+    state: restarted
+    enabled: true
+  become: true

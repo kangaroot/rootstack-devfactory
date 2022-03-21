@@ -1,0 +1,3 @@
+---
+main_ip: 10.42.0.2
+consul_bootstrap_node: true

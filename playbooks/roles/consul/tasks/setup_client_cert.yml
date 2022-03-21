@@ -1,0 +1,19 @@
+---
+- name: generate the client dc cert
+  ansible.builtin.command:
+    cmd: consul tls cert create -client -dc {{ consul_dc_name }} -ca /etc/consul.d/consul-agent-ca.pem
+  args:
+    chdir: /etc/consul.d
+    creates: "/etc/consul.d/{{consul_dc_name}}-client-consul-0.pem"
+  become: true
+
+- name: set permissions on generated files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: 0640
+    owner: consul
+    group: consul
+  become: true
+  loop:
+    - "/etc/consul.d/{{ consul_dc_name }}-client-consul-0.pem"
+    - "/etc/consul.d/{{ consul_dc_name }}-client-consul-0-key.pem"

@@ -1,0 +1,4 @@
+---
+- hosts: grafana
+  roles:
+    - role: grafana

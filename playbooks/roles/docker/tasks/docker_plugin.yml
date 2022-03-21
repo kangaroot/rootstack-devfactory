@@ -1,0 +1,23 @@
+---
+- name: check if plugin already installed
+  ansible.builtin.command:
+    cmd: docker plugin list
+  register: list_plugins
+  become: true
+
+- name: debug registered plugins
+  ansible.builtin.debug:
+    msg: "{{ list_plugins }}"
+
+- name: enable docker plugin
+  ansible.builtin.command:
+    cmd: "docker plugin install {{ item.identifier }}:{{ item.version }} --alias {{ item.alias }} --grant-all-permissions"
+  register: plugin_install
+  become: true
+  when: "item.alias + ':' + item.version not in list_plugins.stdout"
+
+- name: restart docker
+  ansible.builtin.service:
+    name: docker
+    state: restarted
+  become: true

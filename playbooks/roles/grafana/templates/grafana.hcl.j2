@@ -1,0 +1,55 @@
+job "grafana" {
+    datacenters = ["{{ nomad_datacenter }}",]
+    type = "service"
+
+    group "grafana" {
+      count = 1
+      network {
+        port "grafana" {
+          static = 3000
+          host_network = "public"
+        }
+      }
+      task "grafana" {
+        constraint {
+          attribute = "${node.unique.name}"
+          value = "{{ vm_name }}"
+        }
+        env {}
+        driver = "docker"
+        user = "grafana"
+        config {
+          image = "grafana/grafana"
+          ports = ["grafana"]
+          network_mode = "host"
+          volumes = [
+            "/etc/grafana:/etc/grafana",
+            "/var/lib/grafana:/var/lib/grafana"
+          ]
+          {% if 'aarch64' != ansible_architecture %}
+          logging {
+            type = "loki"
+          }
+          {% endif %}
+        }
+        service {
+          name = "grafana"
+          port = "grafana"
+          tags = [ "admin", "metrics", "logs",
+            "traefik.enable=true",
+            "traefik.http.routers.grafana.tls=true",
+            "traefik.http.routers.grafana.entrypoints=https",
+            "traefik.http.routers.grafana.tls.certResolver={{ consul_dc_name }}",
+            "traefik.http.routers.grafana.tls.domains[0].main=grafana.{{ zone }}",
+          ]
+          check {
+            type = "http"
+            path = "/api/health"
+            port = "grafana"
+            interval = "5s"
+            timeout = "3s"
+          }
+        }
+      }
+    }
+}

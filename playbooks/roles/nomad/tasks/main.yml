@@ -1,0 +1,32 @@
+---
+- name: check version installed
+  ansible.builtin.command:
+    cmd: nomad --version
+  register: nomad_version_installed
+  changed_when: false
+  failed_when: false
+
+- name: install nomad
+  ansible.builtin.include_tasks: "install_{{ ansible_distribution | lower }}_binary.yml"
+  when: nomad_installed_version is not defined or nomad_version not in nomad_version_installed.stdout
+
+- name: setup configs
+  ansible.builtin.include_tasks: "setup_nomad_configs.yml"
+
+- name: install cni plugins
+  ansible.builtin.include_tasks: "cni.yml"
+
+- name: enable nomad
+  ansible.builtin.service:
+    name: nomad
+    state: restarted
+    enabled: true
+  become: true
+
+- name: set namespaces
+  ansible.builtin.command:
+    cmd: nomad namespace apply -descr "{{ item }} namespace" {{ item }}
+  changed_when: false
+  failed_when: false
+  loop: "{{ nomad_namespaces }}"
+  run_once: true

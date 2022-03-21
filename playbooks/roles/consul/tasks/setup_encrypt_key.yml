@@ -1,0 +1,39 @@
+---
+- name: debug
+  ansible.builtin.debug:
+    msg: "{{ groups['consul_node'] }}"
+
+- name: check whether keygen has already ran
+  ansible.builtin.stat:
+    path: /etc/consul.d/gossip.key
+  become: true
+  register: keygen_stat
+
+- block:
+  - name: ensure /etc/consul.d is exists
+    ansible.builtin.file:
+      path: /etc/consul.d
+      state: directory
+      mode: 0755
+    delegate_to: "{{ item }}"
+    become: true
+    loop: "{{ groups['consul_node'] }}"
+    when: ansible_fqdn != item
+
+  - name: setup the key for encryption
+    ansible.builtin.command:
+      cmd: consul keygen
+    register: consul_keygen
+    run_once: true
+
+  - name: store key onto system
+    ansible.builtin.copy:
+      content: "{{ consul_keygen.stdout }}"
+      mode: 0600
+      dest: /etc/consul.d/gossip.key
+      owner: consul
+    delegate_to: "{{ item }}"
+    loop: "{{ groups['consul_node'] }}"
+    run_once: true
+  when: keygen_stat.stat.exists == false
+  become: true

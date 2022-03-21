@@ -1,0 +1,20 @@
+---
+- name: install repo
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+  become: true
+
+- name: install package
+  ansible.builtin.yum:
+    name: [ "docker-ce", "docker-ce-cli", "containerd.io", "unzip"]
+    state: latest
+    update_cache: true
+  become: true
+
+- name: setup and enable service
+  ansible.builtin.service:
+    name: docker
+    enabled: true
+    state: started
+  become: true

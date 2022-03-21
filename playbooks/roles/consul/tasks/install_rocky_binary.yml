@@ -1,0 +1,6 @@
+---
+- name: install consul
+  ansible.builtin.yum:
+    name: consul
+    state: latest
+  become: true

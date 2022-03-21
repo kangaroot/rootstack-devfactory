@@ -1,0 +1,27 @@
+---
+- name: ensure dirs are there
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+  become: true
+  loop:
+    - "{{ nomad_etc_dir }}"
+    - "{{ nomad_data_dir }}"
+
+- name: install nomad
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    update_cache: true
+    state: present
+  loop: 
+    - python3-pip
+    - nomad
+  become: true
+
+- name: install python-nomad
+  ansible.builtin.pip:
+    name: python-nomad
+    state: latest
+  become: true

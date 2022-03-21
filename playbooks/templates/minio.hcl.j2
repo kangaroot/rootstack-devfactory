@@ -1,0 +1,78 @@
+job "minio" {
+  datacenters = ["{{ nomad_datacenter }}"]
+  type = "service"
+
+  group "{{ job_name }}" {
+    count = 1
+    network {
+      mode = "bridge"
+      port "minio" {
+        static = 9000
+        host_network = "public"
+      }
+      port "minio-console" {
+        static = 9001
+        host_network = "public"
+      }
+    }
+    task "{{job_name}}" {
+    {% if job_fact.affinity_value is defined %}
+      constraint {
+        attribute = "${node.unique.name}"
+        value = "{{ job_fact['affinity_value'] }}"
+      }
+    {% endif %}
+      driver = "docker"
+      config {
+        image = "minio/minio"
+        ports = ["minio"]
+        volumes = [
+        {% for dirs in job_fact.volumes %}
+          "{{ dirs.dir }}:{{ dirs.container_dir }}",
+        {% endfor %}
+        ]
+        args = [
+          "server",
+          "/data/{{ vm_name }}/minio",
+          "--address",
+          ":9000",
+          "--console-address",
+          ":9001"
+        ]
+        {% if 'aarch64' != ansible_architecture %}
+         logging {
+          type = "loki"
+        }
+        {% endif %}
+      }
+      env {
+        MINIO_ACCESS_KEY = "{{ s3_access_key }}"
+        MINIO_SECRET_KEY = "{{ s3_secret_key }}"
+        MINIO_PROMETHEUS_AUTH_TYPE = "public"
+      }
+    }
+    service {
+      name = "s3"
+      port = "minio"
+      tags = [
+        "s3", "minio", "admin",
+        "traefik.http.routers.s3.tls=true",
+        "traefik.http.routers.s3.tls.certResolver={{ consul_dc_name }}",
+        "traefik.http.routers.s3.tls.domains[0].main=s3.{{ zone }}",
+        ]
+      check {
+        type = "http"
+        path = "/minio/health/live"
+        port = "minio"
+        interval = "10s"
+        timeout = "2s"
+      }
+    }
+    restart {
+      attempts = 10
+      interval = "5m"
+      delay = "30s"
+      mode = "delay"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+---
+server:
+  http_listen_address: {{ vm_ip }}
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki.service.consul:8880/loki/api/v1/push
+
+scrape_configs:
+- job_name: system
+  static_configs:
+  - targets:
+      - localhost
+    labels:
+      job: varlogs
+{% if ansible_distribution|lower in ['debian', 'ubuntu'] %}
+      __path__: /var/log/{auth\.,kern\.,sys}log
+{% else %}
+      __path__: /var/log/{messages,secure,audit/audit.log}
+{% endif %}
+- job_name: journald
+  journal:
+    path: /run/log/journal
+    labels:
+      job: systemd-journal
+  relabel_configs:
+    - source_labels: ['__journal__systemd_unit']
+      target_label: 'unit'
+- job_name: 'nomad-logs'
+  consul_sd_configs:
+    - server: '{{ vm_ip }}:8500'
+  relabel_configs:
+    - source_labels: [__meta_consul_node]
+      target_label: __host__
+    - source_labels: [__meta_consul_service_metadata_external_source]
+      target_label: source
+      regex: (.*)
+      replacement: '$1'
+    - source_labels: [__meta_consul_service_id]
+      regex: '_nomad-task-([a-z0-9]*)-([a-z0-9]*)-([a-z0-9]*)-([a-z0-9]*)-([a-z0-9]*).*'
+      target_label:  'task_id'
+      replacement: '$1-$2-$3-$4-$5'
+    - source_labels: [__meta_consul_tags]
+      regex: ',(admin|worker),'
+      target_label:  'group'
+      replacement:   '$1'
+    - source_labels: [__meta_consul_service]
+      target_label: job
+    - source_labels: ['__meta_consul_node']
+      regex:         '(.*)'
+      target_label:  'instance'
+      replacement:   '$1'
+    - source_labels: [__meta_consul_service_id]
+      regex: '_nomad-task-([a-z0-9]*)-([a-z0-9]*)-([a-z0-9]*)-([a-z0-9]*)-([a-z0-9]*).*'
+      target_label:  '__path__'
+      replacement: '/opt/nomad/alloc/$1-$2-$3-$4-$5/alloc/logs/*std*.{?,??}'

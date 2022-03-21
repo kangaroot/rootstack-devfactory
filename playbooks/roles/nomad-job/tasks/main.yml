@@ -1,0 +1,76 @@
+---
+- name: set job facts
+  ansible.builtin.set_fact:
+    job_fact: "{{ lookup('vars', 'nomad_job_' + job_name ) | default({}) }}"
+
+- name: ensure user exists when defined
+  ansible.builtin.user:
+    name: "{{ job_fact.user.name }}"
+    uid: "{{ job_fact.user.uid if job_fact.user.uid is defined else omit }}"
+    state: "present"
+  become: true
+  delegate_to: "{{ item }}"
+  loop: "{{ groups['nomad'] }}"
+  when: job_fact.user is defined
+
+- name: ensure group exists when defined
+  ansible.builtin.group:
+    name: "{{ job_fact.user.name }}"
+    gid: "{{ job_fact.user.gid if job_fact.user.gid is defined else omit }}"
+    state: "present"
+  become: true
+  delegate_to: "{{ item }}"
+  loop: "{{ groups['nomad'] }}"
+  when: job_fact.user.gid is defined
+
+- name: ensure folders for volumes are available
+  ansible.builtin.file:
+    path: "{{ item.dir }}"
+    state: directory
+    owner: "{{ job_fact.user.name if job_fact.user is defined else omit }}"
+    mode: 0760
+  loop: "{{ job_fact.volumes }}"
+  become: true
+  when: job_fact.volumes is defined
+
+- name: traefik default_cert
+  ansible.builtin.copy:
+    dest: "{{ job_fact.default_cert.certFile }}"
+    content: "{{ cert_file_content }}"
+    mode: 0600
+  become: true
+  run_once: true
+  when: "'traefik' == job_name and job_fact.default_cert is defined"
+
+- name: traefik default_key
+  ansible.builtin.copy:
+    dest: "{{ job_fact.default_cert.keyFile }}"
+    content: "{{ key_file_content }}"
+    mode: 0600
+  become: true
+  run_once: true
+  when: "'traefik' == job_name and job_fact.default_cert is defined"
+
+
+- name: debug
+  debug:
+    msg: "{{ job_fact }}"
+
+# Allow to retry as if this is ran immediately after starting nomad
+# it might not immediately be ready
+# Be carefull to run only once, as the amount of jobs to be spawned
+# should be declared in your jobfile
+- name: spawn nomad job
+  community.general.nomad_job:
+    host: "nomad.service.consul"
+    state: present
+    content: "{{ lookup('ansible.builtin.template', job_name + '.hcl.j2') }}"
+    use_ssl: false
+  register: nomad_job_spawn
+  retries: 10
+  delay: 5
+  until: nomad_job_spawn.failed == false
+
+- name: debug
+  debug:
+    msg: "{{ nomad_job_spawn }}"

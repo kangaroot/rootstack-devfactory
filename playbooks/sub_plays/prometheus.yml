@@ -1,0 +1,6 @@
+---
+- hosts: prometheus
+  roles:
+    - role: nomad-job
+      vars:
+        job_name: prometheus

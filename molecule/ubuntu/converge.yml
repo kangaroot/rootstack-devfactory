@@ -1,0 +1,3 @@
+---
+- name: all
+  import_playbook: ../../playbooks/deploy.yml

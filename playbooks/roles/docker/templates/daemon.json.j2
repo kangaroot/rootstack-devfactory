@@ -1,0 +1,8 @@
+{
+  "debug": true,
+  "log-driver": "loki",
+  "log-opts": {
+    "loki-url": "http://{{ s3_access_key}}:{{ s3_secret_key }}@loki.service.consul:8880/loki/api/v1/push",
+    "loki-batch-size": "400"
+  }
+}

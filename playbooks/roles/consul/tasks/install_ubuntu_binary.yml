@@ -1,0 +1,7 @@
+---
+- name: install consul apt package
+  ansible.builtin.apt:
+    name:
+      - consul
+    state: present
+  become: true

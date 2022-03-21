@@ -1,0 +1,37 @@
+---
+- name: partition disks
+  community.general.parted:
+    device: "{{ item.dev }}"
+    number: "{{ item.number }}"
+    state: present
+  loop: "{{ disks }}"
+  become: true
+
+- name: format disks
+  community.general.filesystem:
+    dev: "{{ item.dev }}{{ item.number }}"
+    fstype: "{{ item.type }}"
+    state: present
+    force: true
+  loop: "{{ disks }}"
+  become: true
+
+- name: create data_home
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: "{{ 'wheel' if 'rocky' in ansible_distribution|lower else 'admin' }}"
+    mode: 0770
+  loop: "{{ disks }}"
+  become: true
+
+- name: mount
+  ansible.posix.mount:
+    boot: true
+    src: "{{ item.dev }}{{ item.number }}"
+    fstype: "{{ item.type }}"
+    path: "{{ item.path }}"
+    state: mounted
+  loop: "{{ disks }}"
+  become: true

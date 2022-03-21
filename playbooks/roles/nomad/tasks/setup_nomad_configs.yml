@@ -1,0 +1,15 @@
+---
+- name: setup nomad server/worker config
+  ansible.builtin.template:
+    src: "nomad.hcl.j2"
+    dest: "{{ nomad_etc_dir }}/nomad.hcl"
+    owner: root
+    group: root
+    mode: 0660
+  become: true
+
+- name: setup nomad service file
+  ansible.builtin.template:
+    src: nomad.service.j2
+    dest: /etc/systemd/system/nomad.service
+  become: true

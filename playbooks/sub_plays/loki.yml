@@ -1,0 +1,4 @@
+---
+- hosts: loki
+  roles:
+    - role: loki

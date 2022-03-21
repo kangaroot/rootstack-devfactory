@@ -1,0 +1,23 @@
+[Unit]
+Description=Loki
+Documentation=https://www.grafana.com/oss/loki
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart=/usr/bin/loki -config.file /etc/loki/loki.yaml
+KillMode=process
+KillSignal=SIGINT
+LimitNOFILE=infinity
+LimitNPROC=infinity
+Restart=on-failure
+RestartSec=2
+StartLimitBurst=3
+TasksMax=infinity
+User=loki
+Group=loki
+
+[Install]
+WantedBy=multi-user.target
+

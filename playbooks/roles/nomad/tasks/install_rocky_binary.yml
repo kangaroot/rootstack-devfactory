@@ -1,0 +1,31 @@
+---
+- name: check version
+  ansible.builtin.command: nomad --version
+  register: nomad_installed
+  changed_when: false
+  ignore_errors: true
+
+- name: get nomad binary and extract
+  ansible.builtin.unarchive:
+    src: https://releases.hashicorp.com/nomad/{{ nomad_version}}/nomad_{{ nomad_version }}_{{ ansible_system | lower }}_{{ pkg_arch_map[ansible_architecture] }}.zip
+    dest: "/usr/bin"
+    remote_src: true
+    owner: root
+    group: root
+    mode: 0777
+  become: true
+  when: nomad_installed.failed or nomad_version not in nomad_installed.stdout
+
+- name: install python-nomad
+  ansible.builtin.pip:
+    name: python-nomad
+    state: latest
+  become: true
+
+- name: ensure folders exist
+  ansible.builtin.file:
+    path: /etc/nomad.d
+    state: directory
+    owner: root
+    group: root
+  become: true

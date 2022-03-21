@@ -1,0 +1,35 @@
+{
+  "datacenter": "{{ consul_dc_name }}",
+  "node_name": "{{ vm_name }}",
+  "data_dir": "/opt/consul",
+  "encrypt": "{{ gossip.stdout }}",
+  "ca_file": "/etc/consul.d/consul-agent-ca.pem",
+  "cert_file": "/etc/consul.d/{{ consul_dc_name }}-server-consul-0.pem",
+  "key_file": "/etc/consul.d/{{ consul_dc_name }}-server-consul-0-key.pem",
+  "verify_incoming": false,
+  "verify_outgoing": true,
+  "verify_server_hostname": false,
+  "bind_addr": "{{ vm_ip }}",
+  "addresses": {
+    "https": "{{ vm_ip }}",
+    "http": "{{ vm_ip }}",
+    "dns": "{{ vm_ip }}",
+    "grpc": "{{ vm_ip }}"
+  },
+  "ports": {
+    "grpc": 8502
+  },
+  {% if 'admin' in group_names %}
+  "server": true,
+  {% if consul_bootstrap_node is defined %}
+  "bootstrap": true,
+  {% endif %}
+  {% endif %}
+  "retry_join": [{% for host in groups['consul_node'] %}"{{ hostvars[host]['vm_ip'] }}"{% if not loop.last %},{% endif %}{% endfor %}],
+  "ui_config": {
+    "enabled": true
+  },
+  "connect": {
+    "enabled": true
+  }
+}

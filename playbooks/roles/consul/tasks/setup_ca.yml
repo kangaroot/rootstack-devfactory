@@ -1,0 +1,46 @@
+---
+- name: generate the consul CA
+  ansible.builtin.command:
+    cmd: consul tls ca create
+  args:
+    chdir: /etc/consul.d
+    creates: /etc/consul.d/consul-agent-ca.pem
+  become: true
+
+- name: set the key as fact
+  ansible.builtin.command:
+    cmd: cat /etc/consul.d/consul-agent-ca-key.pem
+  changed_when: false
+  register: ca_key
+  become: true
+
+- name: set the pem as fact
+  ansible.builtin.command:
+    cmd: cat /etc/consul.d/consul-agent-ca.pem
+  changed_when: false
+  register: ca_pem
+  become: true
+
+- name: store key onto other systems
+  ansible.builtin.copy:
+    content: "{{ ca_key.stdout }}"
+    mode: 0640
+    owner: consul
+    group: consul
+    dest: /etc/consul.d/consul-agent-ca-key.pem
+  delegate_to: "{{ item }}"
+  become: true
+  loop: "{{ groups['consul_node'] }}"
+  when: ansible_fqdn != item
+
+- name: store ca cert onto other systems
+  ansible.builtin.copy:
+    content: "{{ ca_pem.stdout }}"
+    mode: 0640
+    owner: consul
+    group: consul
+    dest: /etc/consul.d/consul-agent-ca.pem
+  delegate_to: "{{ item }}"
+  become: true
+  loop: "{{ groups['consul_node'] }}"
+  when: ansible_fqdn != item

@@ -1,0 +1,13 @@
+---
+- name: start and enable loki
+  ansible.builtin.service:
+    name: loki
+    state: started
+    enabled: true
+  become: true
+
+- name: restart loki
+  ansible.builtin.service:
+    name: loki
+    state: restarted
+  become: true

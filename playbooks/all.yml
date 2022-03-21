@@ -1,0 +1,46 @@
+---
+- hosts: all:!bastion
+
+  pre_tasks:
+    - name: setup unzip
+      ansible.builtin.package:
+        name: unzip
+        state: present
+      tags:
+        - always
+      become: true
+
+  roles:
+    - role: nomad-job
+      vars:
+        job_name: traefik
+      tags:
+        - traefik
+      when: "'admin' in group_names"
+    - role: nomad-job
+      vars:
+        job_name: minio
+      tags:
+        - minio
+      when: "'minio' in group_names"
+    - role: minio_client
+      tags:
+        - minio_client
+      when: "'admin' in group_names"
+    - role: loki
+      tags:
+        - loki
+      when: "'loki' in group_names"
+    - role: nomad-job
+      vars:
+        job_name: prometheus
+      tags:
+        - prometheus
+      when: "'prometheus' in group_names"
+    - role: promtail
+      tags:
+        - promtail
+    - role: grafana
+      tags:
+        - grafana
+      when: "'grafana' in group_names"

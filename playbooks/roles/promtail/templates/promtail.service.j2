@@ -1,0 +1,23 @@
+[Unit]
+Description=Promtail
+Documentation=https://www.grafana.com/oss/loki
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStart=/usr/bin/promtail -config.file /etc/loki/promtail.yaml
+KillMode=process
+KillSignal=SIGINT
+LimitNOFILE=infinity
+LimitNPROC=infinity
+Restart=on-failure
+RestartSec=2
+StartLimitBurst=3
+TasksMax=infinity
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target
+

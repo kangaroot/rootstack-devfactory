@@ -1,0 +1,6 @@
+- hosts: minio
+  roles:
+    - role: minio
+      vars:
+        job_name: minio
+    - role: minio_client
