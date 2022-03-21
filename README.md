@@ -39,10 +39,7 @@ The initial phase of this project will be focussed on Azure deployment.
 
 # Architecture
 
-When deploying we need minimum 4 vm's (3 admin, 1 worker)
-
-![](./img/hashi-in-a-box-high-level-resources.png)
-
+When deploying we need minimum 4 vm's (3 admin, 1 worker).
 
 The applicative high level overview is following:
 
