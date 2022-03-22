@@ -34,6 +34,9 @@ The initial phase of this project will be focussed on Azure deployment.
 - [Minio](#minio)
 - [Prometheus](#prometheus)
 - [traefik](#traefik)
+- [Installation](#installation)
+  - [dependencies for local development](#dependencies-for-local-development)
+  - [python environment](#python-environment)
 
 
 # Architecture
@@ -221,3 +224,28 @@ It listens to following ports:
 It uses the Consul Catalog to enable services as they arrive, and allows for custom configuration through the `{{ consul_dc_name }}_traefik` prefix in the Consul K/V.
 
 If a default_cert is defined in the `job_fact` it will add a the certs to the default tls store, enabling a self provided certificate.
+
+
+# Installation
+
+For installing the environment one needs to create an inventory (both `molecule/ubuntu/molecule.yml` and `molecule/rocky/molecule.yml`) show the minimal variables needed for a runtime.
+
+## dependencies for local development
+
+* VirtualBox opensource version
+* Vagrant
+* Python3
+
+## python environment
+
+Installation python environment is done as such:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+To setup a local environment, one can use molecule:
+
+`molecule converge -s ubuntu` or `molecule converge -s rocky`
