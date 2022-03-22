@@ -16,7 +16,6 @@ The initial phase of this project will be focussed on Azure deployment.
 
 - [Hashi in a box](#hashi-in-a-box)
 - [Table of contents](#table-of-contents)
-- [Prerequisites](#prerequisites)
 - [Architecture](#architecture)
 - [Native component list](#native-component-list)
 - [Containerized component list](#containerized-component-list)
@@ -44,6 +43,8 @@ When deploying we need minimum 4 vm's (3 admin, 1 worker).
 The applicative high level overview is following:
 
 ![](./img/hashi-in-a-box-high-level.png)
+
+In the setup the runtime stack runs natively on the Linux system, they provide the base for the nomad runtime and observability around it.
 
 
 # Native component list
