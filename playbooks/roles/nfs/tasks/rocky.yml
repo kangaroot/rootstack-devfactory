@@ -1,6 +1,0 @@
----
-- name: install nfs
-  ansible.builtin.yum:
-    name: nfs-utils
-    state: latest
-  become: true

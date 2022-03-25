@@ -1,4 +1,4 @@
 ---
-consul_version: v1.10.2
+consul_version: v1.11.4
 consul_install_path: /opt/consul
 consul_data_path: "{{ consul_install_path }}/data"
