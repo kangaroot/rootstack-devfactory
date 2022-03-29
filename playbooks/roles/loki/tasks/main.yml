@@ -13,12 +13,16 @@
     state: present
   become: true
 
-- name: create config folder
+- name: create config folder and wal folder
   ansible.builtin.file:
-    path: /etc/loki
+    path: "{{ item }}"
     state: directory
     owner: loki
     group: loki
+    mode: 0755
+  loop:
+    - /etc/loki
+    - /data/loki/wal
   become: true
 
 - name: version check on existing binary
@@ -28,20 +32,20 @@
   ignore_errors: true
 
 - block:
-  - name: download and extract binary
-    ansible.builtin.unarchive:
-      src:  https://github.com/grafana/loki/releases/download/v{{ loki_version }}/loki-linux-{{ pkg_arch_map[ansible_architecture] }}.zip
-      dest: "/usr/bin"
-      remote_src: true
-      owner: loki
-      group: loki
-    become: true
+    - name: download and extract binary
+      ansible.builtin.unarchive:
+        src: https://github.com/grafana/loki/releases/download/v{{ loki_version }}/loki-linux-{{ pkg_arch_map[ansible_architecture] }}.zip
+        dest: "/usr/bin"
+        remote_src: true
+        owner: loki
+        group: loki
+      become: true
 
-  - name: rename binary
-    ansible.builtin.command:
-      cmd: mv /usr/bin/loki-{{ ansible_system | lower }}-{{ pkg_arch_map[ansible_architecture] }} /usr/bin/loki
-      creates: /usr/bin/loki
-    become: true
+    - name: rename binary
+      ansible.builtin.command:
+        cmd: mv /usr/bin/loki-{{ ansible_system | lower }}-{{ pkg_arch_map[ansible_architecture] }} /usr/bin/loki
+        creates: /usr/bin/loki
+      become: true
   when: loki_bin_ver.failed or loki_version not in loki_bin_ver.stdout
 
 - name: configure loki
@@ -75,7 +79,7 @@
     dest: /usr/lib/systemd/system/loki.service
   become: true
   when: "'loki' in group_names"
-  notify: start and enable loki
+  notify: startenable loki
 
 - name: register loki into consul
   community.general.consul:

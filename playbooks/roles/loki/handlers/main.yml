@@ -1,5 +1,5 @@
 ---
-- name: start and enable loki
+- name: startenable loki
   ansible.builtin.service:
     name: loki
     state: started
