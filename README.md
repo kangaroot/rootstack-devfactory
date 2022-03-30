@@ -259,3 +259,5 @@ pip install -r requirements.txt
 To setup a local environment, one can use molecule:
 
 `molecule converge -s ubuntu` or `molecule converge -s rocky`
+
+When using the molecule local setups, the password for the user is "test"

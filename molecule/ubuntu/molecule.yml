@@ -124,6 +124,7 @@ provisioner:
         access_admin_users:
           - name: sejo
             key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBDFKJQVfenACYXmanW9k9+EC2pb8b/AGlrjw1BsheIp jochen@sejo-it.be
+            # hashed "test"
             password_hash: $$6$$uWl/IxtJdaTgbGvU$$DkVPv652.ODL7bsfMG7jjYjnhkF/hwSJxQj05uLNvryRe.xRu.4GYrUTQJ7eEzhE.ObAG/yshF3AVrTfvDG7p0
             full: Jochen Maes
             shell: /bin/bash
@@ -158,15 +159,15 @@ provisioner:
         network_cidr: 10.42.0.0/24
       grafana:
         grafana_dashboards:
-          - dashboard_id: '10880'
-            revision_id: '1' 
-            datasource: 'loki'
-          - dashboard_id: '12250'
+          - dashboard_id: "10880"
+            revision_id: "1"
+            datasource: "loki"
+          - dashboard_id: "12250"
             revision_id: 1
-            datasource: 'prometheus'
-          - dashboard_id: '13502'
+            datasource: "prometheus"
+          - dashboard_id: "13502"
             revision_id: 13
-            datasource: 'prometheus'
+            datasource: "prometheus"
 
 verifier:
   name: ansible
