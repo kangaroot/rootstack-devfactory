@@ -10,4 +10,4 @@
   import_playbook: sub_plays/nomad.yml
 
 - name: setup system jobs on nomad
-  import_playbook: all.yml
+  import_playbook: runtime.yml
