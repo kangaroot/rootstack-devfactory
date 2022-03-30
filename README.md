@@ -17,11 +17,12 @@ The initial phase of this project will be focussed on Azure deployment.
 - [Hashi in a box](#hashi-in-a-box)
 - [Table of contents](#table-of-contents)
 - [Architecture](#architecture)
+  - [Integrations](#integrations)
 - [Native component list](#native-component-list)
 - [Containerized component list](#containerized-component-list)
 - [Hashicorp Nomad](#hashicorp-nomad)
   - [Networking](#networking)
-  - [Integrations](#integrations)
+  - [Integrations](#integrations-1)
     - [Consul](#consul)
     - [docker (and plugins)](#docker-and-plugins)
 - [Hashicorp Consul](#hashicorp-consul)
@@ -41,13 +42,22 @@ The initial phase of this project will be focussed on Azure deployment.
 
 # Architecture
 
-When deploying we need minimum 4 vm's (3 admin, 1 worker).
+When deploying we need minimum 4 vm's (3 admin, 1 worker), however to be able to upgrade we suggest to start with 5 or 6 systems.
+
+![](./img/OSSSystemdiagram.png)
 
 The applicative high level overview is following:
 
 ![](./img/hashi-in-a-box-high-level.png)
 
 In the setup the runtime stack runs natively on the Linux system, they provide the base for the nomad runtime and observability around it.
+
+## Integrations
+
+The main integrations are as such: 
+
+![](./img/OSSIntegrations.png)
+
 
 
 # Native component list
