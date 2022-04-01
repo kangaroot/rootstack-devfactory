@@ -1,7 +1,7 @@
-# Hashi in a box
+# Rootstacks Devfactory 
 
-The hashi in a box solution is a solution meant to provide teams a quick container/native/vm runtime enviroment.
-The goal is as following:
+The Devfactory is a solution meant to provide teams a quick container/native/vm runtime enviroment.
+The goal is as follows:
 
 * Use the hashicorp toolset to provide
   * Service discovery/mesh
