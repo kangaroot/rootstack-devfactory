@@ -14,7 +14,7 @@ The initial phase of this project will be focussed on Azure deployment.
 
 # Table of contents
 
-- [Hashi in a box](#hashi-in-a-box)
+- [Rootstacks Devfactory ](#rootstacks Devfactory)
 - [Table of contents](#table-of-contents)
 - [Architecture](#architecture)
   - [Integrations](#integrations)
