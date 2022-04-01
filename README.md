@@ -1,4 +1,4 @@
-# Rootstacks Devfactory 
+# Rootstacks Devfactory
 
 The Devfactory is a solution meant to provide teams a quick container/native/vm runtime enviroment.
 The goal is as follows:
@@ -14,7 +14,7 @@ The initial phase of this project will be focussed on Azure deployment.
 
 # Table of contents
 
-- [Rootstacks Devfactory ](#rootstacks Devfactory)
+- [Rootstacks Devfactory](#rootstacks-Devfactory)
 - [Table of contents](#table-of-contents)
 - [Architecture](#architecture)
   - [Integrations](#integrations)
