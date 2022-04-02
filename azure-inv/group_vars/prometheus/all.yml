@@ -1,0 +1,7 @@
+---
+nomad_job_prometheus:
+  affinity_value: admin2
+  volumes:
+    - dir: /data/prometheus
+      container_dir: /prometheus
+

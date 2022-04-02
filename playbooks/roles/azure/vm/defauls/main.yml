@@ -1,0 +1,9 @@
+---
+# Defaults for all vms, override in group_vars or host_vars please!
+
+vm_size: Standard_DS1_v2
+vm_image:
+  offer: UbuntuServer
+  publisher: Canonical
+  sku: 20_04-lts
+  version: latest

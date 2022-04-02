@@ -1,0 +1,8 @@
+---
+vm_name: admin2
+vm_size: "{{ azure_vm_size }}"
+vm_image: "{{ azure_vm_image }}"
+
+admin_username: sejo
+vm_subnet_name: "{{ rg }}-subnet-vm"
+vm_ip: 10.42.0.12

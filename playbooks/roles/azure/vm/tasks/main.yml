@@ -1,0 +1,197 @@
+---
+- block:
+  - name: create public IP and extra interface when bastion node
+    azure.azcollection.azure_rm_publicipaddress:
+      resource_group: "{{ rg }}"
+      name: "{{ rg }}-bastion-pip"
+      state: present
+      sku: "Standard"
+      allocation_method: Static
+    delegate_to: localhost
+
+  - name: create network-interface on the pip
+    azure.azcollection.azure_rm_networkinterface:
+      resource_group: "{{ rg }}"
+      name: "{{ rg }}-bastion-pip-nic"
+      public_ip: true
+      subnet: "{{ vm_subnet_name }}"
+      virtual_network: main_network
+      security_group: "{{ rg }}-nsg"
+      ip_forwarding: true
+      ip_configurations:
+        - name: ipconfig1
+          public_ip_address_name: "{{ rg }}-nic-pip"
+          primary: true
+    delegate_to: localhost
+  when: "'bastion' in group_names"
+  tags:
+    - create
+
+- name: set lb fact
+  ansible.builtin.set_fact:
+    lb_fact:
+      - name: "traefik-lb-backend-pool"
+        load_balancer: "{{ rg }}-lb"
+  when: "'admin' in group_names"
+  tags:
+    - create
+
+- name: create network interface on the main network
+  azure.azcollection.azure_rm_networkinterface:
+    name: "{{ vm_name }}-nic"
+    resource_group: "{{ rg }}"
+    virtual_network: main_network
+    subnet: "{{ vm_subnet_name }}"
+    security_group: "{{ 'lb-nsg-' + rg if 'admin' in group_names else omit }}"
+    create_with_security_group: "{{ 'true' if 'admin' in group_names else 'false' }}"
+    ip_configurations:
+      - name: ipconfig1
+        private_ip_address: "{{ vm_ip }}"
+        private_ip_allocation_method: Static
+        primary: true
+        load_balancer_backend_address_pools: "{{ lb_fact if lb_fact is defined else omit }}"
+  delegate_to: localhost
+  tags:
+    - create
+  when: "'bastion' not in group_names"
+
+- name: create availability set
+  azure.azcollection.azure_rm_availabilityset:
+    name: "as-{{ rg }}-admin"
+    resource_group: "{{ rg }}"
+    sku: Aligned # this is needed to be able to use managed disks
+    state: present
+  run_once: true
+  delegate_to: localhost
+  tags:
+    - create
+
+
+- name: create vm
+  azure.azcollection.azure_rm_virtualmachine:
+    resource_group: "{{ rg }}"
+    name: "{{ vm_name }}"
+    vm_size: "{{ vm_size }}"
+    admin_username: "{{ admin_username }}"
+    image:
+      offer: "{{ vm_image.offer }}"
+      publisher: "{{ vm_image.publisher }}"
+      sku: "{{ vm_image.sku }}"
+      version: "{{ vm_image.version }}"
+    ssh_password_enabled: False
+    ssh_public_keys:
+      - key_data: "{{ access_admin_users
+          | selectattr('name', 'match', 'sejo')
+          | map(attribute='key')
+          | first }}"
+        path: /home/{{ admin_username }}/.ssh/authorized_keys
+    subnet_name: "{{ vm_subnet_name }}"
+    state: "{{ 'absent' if 'destroy' in ansible_run_tags else 'present' }}"
+    storage_account_name: "kanga{{ rg }}storage"
+    managed_disk_type: Standard_LRS
+    os_disk_name: "{{ vm_name }}-osdisk"
+    os_disk_size_gb: "{{ vm_os_disk_size | default(50) }}"
+    network_interface_names:
+      - "{{ rg + '-bastion-pip-nic' if 'bastion' in group_names else vm_name + '-nic' }}"
+    data_disks: "{{ vm_disks if vm_disks is defined else omit }}"
+    availability_set: "{{ 'as-' + rg + '-admin' if 'admin' in group_names else omit }}"
+    vm_identity: "SystemAssigned"
+  delegate_to: localhost
+  register: vm_created
+  tags:
+    - create
+    - destroy
+
+- name: create dns record for bastion host
+  azure.azcollection.azure_rm_dnsrecordset:
+    resource_group: "{{ rg }}"
+    record_type: A
+    relative_name: bastion
+    zone_name: jochen.kangaroot.net
+    time_to_live: 5
+    records:
+      - entry: "{{ azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}"
+  delegate_to: localhost
+  when: "'bastion' in group_names"
+  tags:
+    - create
+
+- name: wait for bastion to be reachable
+  ansible.builtin.wait_for:
+    host: "bastion.{{ zone }}"
+    port: 22
+  when: "'bastion' in group_names"
+  retries: 10
+  delay: 5
+  tags:
+    - create
+
+- name: set bastion hostsfile
+  ansible.builtin.template:
+    src: hosts.j2
+    dest: /etc/hosts
+    mode: 0655
+  become: true
+  when: "'bastion' in group_names"
+  retries: 10
+  delay: 5
+  tags:
+    - create
+
+- name: create extra mounts when vm_disks is defined
+  ansible.builtin.include_tasks: disks.yml
+  loop: "{{ vm_disks if vm_disks is defined else list() }}"
+  when: vm_disks is defined
+  tags:
+    - create
+
+- block:
+  - name: remove dns record when bastion is destroyed
+    azure.azcollection.azure_rm_dnsrecordset:
+      resource_group: "{{ rg }}"
+      record_type: A
+      relative_name: bastion
+      state: absent
+      zone_name: jochen.kangaroot.net
+    delegate_to: localhost
+  - name: delete network interface
+    azure.azcollection.azure_rm_networkinterface:
+      resource_group: "{{ rg }}"
+      name: "{{ rg }}-bastion-pip-nic"
+      state: absent
+    delegate_to: localhost
+  - name: delete bastion pip
+    azure.azcollection.azure_rm_publicipaddress:
+      resource_group: "{{ rg }}"
+      name: "{{ rg }}-bastion-pip"
+      state: absent
+    delegate_to: localhost
+  - name: delete bastion nsg (was autogenerated)
+    azure.azcollection.azure_rm_securitygroup:
+      resource_group: "{{ rg }}"
+      name: "{{ rg }}-bastion-pip-nic"
+      state: absent
+    delegate_to: localhost
+  when: "'bastion' in group_names"
+  tags:
+    - destroy
+
+- name: remove network interface
+  azure.azcollection.azure_rm_networkinterface:
+    resource_group: "{{ rg }}"
+    name: "{{ vm_name }}-nic"
+    state: absent
+  delegate_to: localhost
+  tags:
+    - destroy
+
+- name: destroy availability set
+  azure.azcollection.azure_rm_availabilityset:
+    name: "as-{{ rg }}-admin"
+    resource_group: "{{ rg }}"
+    state: absent
+  run_once: true
+  delegate_to: localhost
+  when: "'bastion' not in group_names"
+  tags:
+    - destroy

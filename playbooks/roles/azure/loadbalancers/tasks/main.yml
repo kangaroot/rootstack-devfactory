@@ -1,0 +1,144 @@
+---
+- name: create the public ip and loadbalancer
+  block:
+    - name: create public ip
+      azure.azcollection.azure_rm_publicipaddress:
+        resource_group: "{{ rg }}"
+        name: "{{ rg }}_pip"
+        allocation_method: Static
+        state: present
+
+    - name: setup the loadbalancer
+      azure.azcollection.azure_rm_loadbalancer:
+        resource_group: "{{ rg }}"
+        name: "{{ rg }}-lb"
+        frontend_ip_configurations:
+          - name: "{{ rg }}_lb_pip"
+            public_ip_address: "{{ rg }}_pip"
+            private_ip_allocation_method: Dynamic
+        backend_address_pools:
+          - name: traefik-lb-backend-pool
+        probes:
+          - name: traefik-ping
+            protocol: Http
+            request_path: /ping
+            port: 8081
+            interval: 5
+            fail_count: 3
+        load_balancing_rules:
+          - name: http_port_lb_rule
+            frontend_ip_configuration: "{{ rg }}_lb_pip"
+            backend_address_pool: traefik-lb-backend-pool
+            frontend_port: 80
+            backend_port: 80
+            protocol: Tcp
+            probe: traefik-ping
+          - name: https_port_lb_rule
+            frontend_ip_configuration: "{{ rg }}_lb_pip"
+            backend_address_pool: traefik-lb-backend-pool
+            frontend_port: 443
+            backend_port: 443
+            protocol: Tcp
+            probe: traefik-ping
+          - name: traefik_admin_lb_rule
+            frontend_ip_configuration: "{{ rg }}_lb_pip"
+            backend_address_pool: traefik-lb-backend-pool
+            frontend_port: 8081
+            backend_port: 8081
+            protocol: Tcp
+            probe: traefik-ping
+        state: present
+  tags:
+    - create
+
+- name: get lb-pip
+  azure.azcollection.azure_rm_publicipaddress_info:
+    resource_group: "{{ rg }}"
+    name: "{{ rg }}_pip"
+  register: lb_pip
+  retries: 20
+  delay: 20
+  until: lb_pip.publicipaddresses[0].ip_address
+  tags:
+    - create
+
+- name: debug
+  ansible.builtin.debug:
+    msg: "{{ lb_pip }}"
+  tags:
+    - create
+
+- name: create * dns record to lb_pip
+  azure.azcollection.azure_rm_dnsrecordset:
+    resource_group: "{{ rg }}"
+    record_type: A
+    relative_name: "*"
+    time_to_live: 60
+    zone_name: "{{ zone }}"
+    records:
+      - entry: "{{ lb_pip.publicipaddresses[0].ip_address if lb_pip is defined else omit }}"
+    state: present
+  tags:
+    - create
+
+- name: destroy * dns record
+  azure.azcollection.azure_rm_dnsrecordset:
+    resource_group: "{{ rg }}"
+    record_type: A
+    relative_name: "*"
+    zone_name: "{{ zone }}"
+    state: absent
+  tags:
+    - destroy
+
+- name: create network security group for loadbalancer
+  azure.azcollection.azure_rm_securitygroup:
+    name: "lb-nsg-{{ rg }}"
+    resource_group: "{{ rg }}"
+    rules:
+      - name: traefik_admin
+        description: traefik-admin rule
+        access: Allow
+        direction: Inbound
+        destination_port_range: 8081
+        priority: 101
+      - name: http_services
+        description: http
+        access: Allow
+        direction: Inbound
+        destination_port_range: 80
+        priority: 102
+      - name: https_services
+        description: https
+        access: Allow
+        direction: Inbound
+        destination_port_range: 443
+        priority: 103
+  delegate_to: localhost
+  tags:
+    - create
+
+- name: destroy the public ip and loadbalancer
+  block:
+    - name: destroy the loadbalancer
+      azure.azcollection.azure_rm_loadbalancer:
+        resource_group: "{{ rg }}"
+        name: "{{ rg }}-lb"
+        frontend_ip_configurations:
+          - name: "{{ rg }}_lb_pip"
+            public_ip_address: "{{ rg }}_pip"
+        state: absent
+
+    - name: destroy public ip
+      azure.azcollection.azure_rm_publicipaddress:
+        resource_group: "{{ rg }}"
+        name: "{{ rg }}_pip"
+        state: absent
+
+    - name: create network security group for loadbalancer
+      azure.azcollection.azure_rm_securitygroup:
+        name: "lb-nsg-{{ rg }}"
+        resource_group: "{{ rg }}"
+        state: absent
+  tags:
+    - destroy

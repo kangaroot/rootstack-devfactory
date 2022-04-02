@@ -1,0 +1,12 @@
+---
+- name: create or destroy storage_account
+  azure.azcollection.azure_rm_storageaccount:
+    resource_group: "{{ rg }}"
+    account_type: "Standard_LRS"
+    force_delete_nonempty: true
+    name: "kanga{{ rg }}storage"
+    state: "{{'absent' if 'destroy' in ansible_run_tags else 'present' }}"
+  run_once: true
+  tags:
+    - create
+    - destroy

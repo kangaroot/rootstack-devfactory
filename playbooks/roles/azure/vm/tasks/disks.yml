@@ -1,0 +1,38 @@
+---
+# item is the variable from the loop
+
+- name: get the disk name for the lun
+  ansible.builtin.shell: 
+    cmd: "lsscsi -b | grep -e ':{{ item.lun}}]' | awk '{print $2}'"
+  register: disk_path
+  become: true
+  tags:
+    - create
+
+- name: create disk partition
+  community.general.parted:
+    device: "{{ disk_path.stdout }}"
+    number: "{{ item.lun }}"
+    state: present
+  become: true
+  tags:
+    - create
+
+- name: format the disk
+  community.general.filesystem:
+    dev: "{{ disk_path.stdout }}{{ item.lun }}"
+    fstype: "{{ item.type }}"
+    state: present
+  become: true
+  tags:
+    - create
+
+- name: mount
+  ansible.posix.mount:
+    fstype: "{{ item.type }}"
+    path: "{{ item.path }}"
+    src: "{{ disk_path.stdout }}{{ item.lun }}"
+    state: mounted
+  become: true
+  tags:
+  - create

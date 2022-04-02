@@ -1,0 +1,11 @@
+grafana_dashboards:
+  - dashboard_id: '10880'
+    revision_id: '1'
+    datasource: 'loki'
+  - dashboard_id: '12250'
+    revision_id: 1
+    datasource: 'prometheus'
+  - dashboard_id: '13502'
+    revision_id: 13
+    datasource: 'prometheus'
+

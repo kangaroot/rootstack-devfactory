@@ -259,3 +259,34 @@ pip install -r requirements.txt
 To setup a local environment, one can use molecule:
 
 `molecule converge -s ubuntu` or `molecule converge -s rocky`
+
+## Azure 
+
+To install on azure you first need to create an inventory. The azure-inv in the root folder is a working example,
+but given that you need specific information for your azure environment you must make modifications.
+
+### Requirements
+
+One needs the following resources in Azure available already:
+
+* A resource group (ours is jochen) 
+* A dns zone (ours is jochen.kangaroot.net)
+
+Make sure you have permissions to create resources and storage accounts within that resource group.
+
+After following the local dev install one needs to run following extra commands to enable the azure collection:
+
+```bash
+$ ansible-galaxy collection install azure.azcollection
+$ pip install -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements-azure.txt
+```
+
+To actually deploy the needed resources one needs to run this command:
+
+```bash
+$ ansible -i <path-to-inventory> playbooks/azure.yml --ask-vault-pass -t create
+```
+
+To destroy the environment run the previous command with the destroy tag instead of create.
+
+
