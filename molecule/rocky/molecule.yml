@@ -4,7 +4,8 @@ dependency:
 driver:
   name: vagrant
   provider:
-    name: virtualbox
+    name: libvirt
+    type: libvirt
 platforms:
   - name: cluster1.test.sejo-it.be
     box: rockylinux/8
