@@ -1,0 +1,173 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: vagrant
+  provider:
+    name: virtualbox
+platforms:
+  - name: cluster1.test.sejo-it.be
+    box: rockylinux/8
+    memory: 1024
+    provider_raw_config_args:
+      - "customize ['createhd', '--filename', 'minioDisk.vdi', '--size', '5120']"
+      - "customize ['storageattach', :id,  '--storagectl',  'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', 'minioDisk.vdi']"
+    interfaces:
+      - network_name: private_network
+        type: static
+        ip: 10.42.0.2
+        auto_config: true
+    groups:
+      - consul_node
+      - admin
+      - minio
+      - minio_client
+      - nomad
+      - loki_server
+      - loki
+  - name: cluster2.test.sejo-it.be
+    box: rockylinux/8
+    memory: 1024
+    provider_raw_config_args:
+      - "customize ['createhd', '--filename', 'psqlDisk.vdi', '--size', '5120']"
+      - "customize ['storageattach', :id,  '--storagectl',  'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', 'psqlDisk.vdi']"
+    interfaces:
+      - network_name: private_network
+        type: static
+        ip: 10.42.0.3
+        auto_config: true
+    groups:
+      - consul_node
+      - admin
+      - psql
+      - nomad
+      - loki
+      - minio_client
+      - grafana
+  - name: cluster3.test.sejo-it.be
+    box: rockylinux/8
+    memory: 1024
+    interfaces:
+      - network_name: private_network
+        type: static
+        ip: 10.42.0.4
+        auto_config: true
+    groups:
+      - consul_node
+      - admin
+      - nomad
+      - minio_client
+      - loki
+      - prometheus
+  - name: cluster4.test.sejo-it.be
+    box: rockylinux/8
+    memory: 1024
+    interfaces:
+      - network_name: private_network
+        type: static
+        ip: 10.42.0.5
+        auto_config: true
+    groups:
+      - consul_node
+      - nomad
+      - client
+      - minio_client
+  - name: cluster5.test.sejo-it.be
+    box: rockylinux/8
+    memory: 1024
+    interfaces:
+      - network_name: private_network
+        type: static
+        ip: 10.42.0.6
+        auto_config: true
+    groups:
+      - consul_node
+      - client
+      - nomad
+      - minio_client
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_ROLES_PATH: ../../playbooks/roles
+  inventory:
+    host_vars:
+      cluster1.test.sejo-it.be:
+        vm_name: cluster1
+        vm_ip: 10.42.0.2
+        consul_bootstrap_node: true
+        disks:
+          - dev: /dev/sdb
+            type: ext4
+            number: 1
+            path: /data/cluster1.test.sejo-it.be
+      cluster2.test.sejo-it.be:
+        vm_name: cluster2
+        vm_ip: 10.42.0.3
+        disks:
+          - dev: /dev/sdb
+            type: ext4
+            number: 1
+            path: /data/cluster2.test.sejo-it.be
+      cluster3.test.sejo-it.be:
+        vm_name: cluster3
+        vm_ip: 10.42.0.4
+      cluster4.test.sejo-it.be:
+        vm_name: cluster4
+        vm_ip: 10.42.0.5
+      cluster5.test.sejo-it.be:
+        vm_name: cluster5
+        vm_ip: 10.42.0.6
+    group_vars:
+      all:
+        zone: test.sejo-it.be
+        consul_dc_name: sejo
+        access_admin_users:
+          - name: sejo
+            key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBDFKJQVfenACYXmanW9k9+EC2pb8b/AGlrjw1BsheIp jochen@sejo-it.be
+            password_hash: $$6$$uWl/IxtJdaTgbGvU$$DkVPv652.ODL7bsfMG7jjYjnhkF/hwSJxQj05uLNvryRe.xRu.4GYrUTQJ7eEzhE.ObAG/yshF3AVrTfvDG7p0
+            full: Jochen Maes
+            shell: /bin/bash
+            groups:
+              - admin
+              - wheel
+        access_admin_group: admin
+        access_users:
+          - name: consul
+            shell: /bin/nologin
+        access_user_groups: []
+        s3_access_key: testkeys3
+        s3_secret_key: testsecrets3
+        pkg_arch_map:
+          aarch64: arm64
+          x86_64: amd64
+        nomad_job_traefik:
+          volumes:
+            - dir: /data/traefik
+              container_dir: /config
+        nomad_job_minio:
+          affinity_value: cluster1
+          volumes:
+            - container_dir: /minio
+              dir: "/data/{{ vm_name}}/minio"
+        nomad_job_prometheus:
+          affinity_value: cluster3
+          volumes:
+            - dir: /data/prometheus
+              container_dir: /prometheus
+      nomad:
+        nomad_datacenter: moleculetest
+        network_cidr: 10.42.0.0/24
+      grafana:
+        grafana_dashboards:
+          - dashboard_id: '10880'
+            revision_id: '1' 
+            datasource: 'loki'
+          - dashboard_id: '12250'
+            revision_id: 1
+            datasource: 'prometheus'
+          - dashboard_id: '13502'
+            revision_id: 13
+            datasource: 'prometheus'
+
+verifier:
+  name: ansible
