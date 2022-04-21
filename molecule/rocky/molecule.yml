@@ -11,8 +11,7 @@ platforms:
     box: rockylinux/8
     memory: 1024
     provider_raw_config_args:
-      - "customize ['createhd', '--filename', 'minioDisk.vdi', '--size', '5120']"
-      - "customize ['storageattach', :id,  '--storagectl',  'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', 'minioDisk.vdi']"
+      - "storage :file, :type => 'qcow2', :device => 'vdb', :size => '5G'"
     interfaces:
       - network_name: private_network
         type: static
@@ -30,8 +29,7 @@ platforms:
     box: rockylinux/8
     memory: 1024
     provider_raw_config_args:
-      - "customize ['createhd', '--filename', 'psqlDisk.vdi', '--size', '5120']"
-      - "customize ['storageattach', :id,  '--storagectl',  'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', 'psqlDisk.vdi']"
+      - "storage :file, :type => 'qcow2', :device => 'vdb', :size => '5G'"
     interfaces:
       - network_name: private_network
         type: static
