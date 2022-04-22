@@ -4,14 +4,14 @@ dependency:
 driver:
   name: vagrant
   provider:
-    name: libvirt
-    type: libvirt
+    name: virtualbox
 platforms:
   - name: cluster1.test.sejo-it.be
     box: rockylinux/8
     memory: 1024
     provider_raw_config_args:
-      - "storage :file, :type => 'qcow2', :device => 'vdb', :size => '5G'"
+      - "customize ['createhd', '--filename', 'minioDisk.vdi', '--size', '5120']"
+      - "customize ['storageattach', :id,  '--storagectl',  'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', 'minioDisk.vdi']"
     interfaces:
       - network_name: private_network
         type: static
@@ -29,7 +29,8 @@ platforms:
     box: rockylinux/8
     memory: 1024
     provider_raw_config_args:
-      - "storage :file, :type => 'qcow2', :device => 'vdb', :size => '5G'"
+      - "customize ['createhd', '--filename', 'psqlDisk.vdi', '--size', '5120']"
+      - "customize ['storageattach', :id,  '--storagectl',  'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', 'psqlDisk.vdi']"
     interfaces:
       - network_name: private_network
         type: static
