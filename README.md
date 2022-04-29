@@ -260,6 +260,10 @@ To setup a local environment, one can use molecule:
 
 `molecule converge -s ubuntu` or `molecule converge -s rocky`
 
+
+When using the molecule local setups, the password for the user is "test"
+
+
 ## Azure 
 
 To install on azure you first need to create an inventory. The azure-inv in the root folder is a working example,
@@ -288,5 +292,3 @@ $ ansible -i <path-to-inventory> playbooks/azure.yml --ask-vault-pass -t create
 ```
 
 To destroy the environment run the previous command with the destroy tag instead of create.
-
-
