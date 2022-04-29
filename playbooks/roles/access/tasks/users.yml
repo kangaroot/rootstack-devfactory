@@ -38,7 +38,7 @@
     update_password: "{{ item.update_password | default('always') }}"
   when: item.password_hash is defined
   loop: "{{ access_admin_users|flatten|zip(access_users)|flatten }}"
-  no_log: true
+  #no_log: true
   become: true
 
 - name: ensure ssh folder exists

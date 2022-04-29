@@ -1,0 +1,44 @@
+---
+- name: create security group
+  azure.azcollection.azure_rm_securitygroup:
+    resource_group: "{{ rg }}"
+    name: "{{ rg }}-nsg"
+    purge_rules: yes
+    rules:
+      - name: ssh
+        access: Allow
+        destination_port_range: 22
+        direction: Inbound
+        priority: 101
+        protocol: Tcp
+      - name: web
+        access: Allow
+        destination_port_range:
+          - 80
+          - 443
+        direction: Inbound
+        priority: 102
+  run_once: true
+  tags:
+    - create
+
+- name: create or destroy subnet
+  azure.azcollection.azure_rm_subnet:
+    resource_group: "{{ rg }}"
+    name: jochen-subnet-vm
+    address_prefix_cidr: "10.42.0.0/24"
+    virtual_network_name: main_network
+    security_group: "{{ rg }}-nsg"
+    state: "{{ 'absent' if 'destroy' in ansible_run_tags else omit }}"
+  run_once: true
+  tags:
+    - create
+    - destroy
+
+- name: destroy security group
+  azure.azcollection.azure_rm_securitygroup:
+    resource_group: "{{ rg }}"
+    name: "{{ rg }}-nsg"
+    state: absent
+  tags:
+    - destroy

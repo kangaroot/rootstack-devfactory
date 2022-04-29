@@ -1,0 +1,13 @@
+---
+- name: create virtual network
+  azure.azcollection.azure_rm_virtualnetwork:
+    resource_group: "{{ rg }}"
+    name: main_network
+    address_prefixes_cidr:
+      - "10.42.0.0/24"
+    state: "{{ 'absent' if 'destroy' in ansible_run_tags else 'present' }}"
+  tags:
+    - create
+    - destroy
+  run_once: true
+

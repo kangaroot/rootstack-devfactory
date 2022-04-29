@@ -1,0 +1,7 @@
+---
+nomad_job_minio:
+  affinity_value: admin0
+  volumes:
+    - dir: minio
+      container_dir: "/data/{{ vm_name }}/minio"
+

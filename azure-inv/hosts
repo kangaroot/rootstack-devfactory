@@ -1,0 +1,57 @@
+
+# Define the name of the bastion host, full fqdn
+# the example will be used for testing thus these are the real
+# values that I use against azure.
+# in my case the zone is jochen.kangaroot.net
+
+[bastion]
+bastion.jochen.kangaroot.net
+
+# specify the admin servers, I specify 3
+[admin]
+admin0.jochen.kangaroot.net
+admin1.jochen.kangaroot.net
+admin2.jochen.kangaroot.net
+
+# same for clients, i will use 3 clients
+[client]
+client0.jochen.kangaroot.net
+client1.jochen.kangaroot.net
+client2.jochen.kangaroot.net
+
+# now we define the proxy command for the hosts
+[admin:vars]
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion.jochen.kangaroot.net"'
+
+[client:vars]
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion.jochen.kangaroot.net"'
+
+# Consul
+[consul_node:children]
+admin
+client
+
+#nomad hosts
+[nomad:children]
+admin
+client
+
+# ingress
+[traefik:children]
+admin
+
+# observability
+[minio]
+admin0.jochen.kangaroot.net
+
+[loki:children]
+admin
+
+[loki_server]
+admin2.jochen.kangaroot.net
+
+[grafana]
+admin1.jochen.kangaroot.net
+
+[prometheus]
+admin2.jochen.kangaroot.net

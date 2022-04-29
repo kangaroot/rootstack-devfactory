@@ -1,0 +1,7 @@
+---
+nomad_job_traefik:
+  certificate_email: jmaes@kangaroot.net
+  volumes:
+    - dir: /data/traefik
+      container_dir: /config
+

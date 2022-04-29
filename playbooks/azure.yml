@@ -1,0 +1,83 @@
+---
+- hosts: localhost
+  roles:
+    - role: azure/vnet
+      when: "'create' in ansible_run_tags"
+    - role: azure/storage_account
+      when: "'create' in ansible_run_tags"
+    - role: azure/subnet
+      when: "'create' in ansible_run_tags"
+    - role: azure/loadbalancers
+      when: "'create' in ansible_run_tags"
+
+- hosts: bastion
+  gather_facts: false
+  roles:
+    - role: azure/vm
+
+- hosts: admin:client
+  gather_facts: false
+  roles:
+    - role: azure/vm
+  post_tasks:
+    - name: check aliveness vms
+      ansible.builtin.ping:
+      retries: 20
+      delay: 5
+
+- hosts: admin:bastion
+  gather_facts: false
+  tasks:
+    - name: gather facts
+      ansible.builtin.gather_facts:
+      tags:
+        - create
+        - resolved
+
+    - name: set resolved config
+      ansible.builtin.template:
+        src: resolved.conf.j2
+        dest: /etc/systemd/resolved.conf
+        mode: 0644
+        owner: root
+        group: root
+      become: true
+      run_once: true
+      delegate_to: bastion.jochen.kangaroot.net
+      register: resolved_config
+      tags:
+        - create
+        - resolved
+
+    - name: restart systemd-resolved
+      ansible.builtin.service:
+        name: systemd-resolved
+        state: restarted
+      become: true
+      run_once: true
+      when: resolved_config.changed
+      delegate_to: bastion.jochen.kangaroot.net
+      tags:
+        - create
+        - resolved
+
+# setup bastion system
+- hosts: bastion
+  gather_facts: false
+  roles:
+    - role: bastion
+      tags:
+        - create
+      when: "'create' in ansible_run_tags"
+
+# orderly destroy
+- hosts: localhost
+  roles:
+    - role: azure/loadbalancers
+      when: "'destroy' in ansible_run_tags"
+    - role: azure/subnet
+      when: "'destroy' in ansible_run_tags"
+    - role: azure/storage_account
+      when: "'destroy' in ansible_run_tags"
+    - role: azure/vnet
+      when: "'destroy' in ansible_run_tags"
