@@ -1,37 +1,33 @@
-
-# Define the name of the bastion host, full fqdn
-# the example will be used for testing thus these are the real
-# values that I use against azure.
-# in my case the zone is jochen.kangaroot.net
-
 [bastion]
-bastion.jochen.kangaroot.net
+bastion.example.net
 
-# specify the admin servers, I specify 3
 [admin]
-admin0.jochen.kangaroot.net
-admin1.jochen.kangaroot.net
-admin2.jochen.kangaroot.net
+cl0.example.net
+cl1.example.net
+cl2.example.net
 
-# same for clients, i will use 3 clients
-[client]
-client0.jochen.kangaroot.net
-client1.jochen.kangaroot.net
-client2.jochen.kangaroot.net
-
-# now we define the proxy command for the hosts
 [admin:vars]
-ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion.jochen.kangaroot.net"'
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion.example.net"'
+
+[client]
+cl3.example.net
+cl4.example.net
+cl5.example.net
 
 [client:vars]
-ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion.jochen.kangaroot.net"'
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion.example.net"'
 
-# Consul
+# hashi runtime groups
+[vault_server:children]
+admin
+
+[vault_agent:children]
+client
+
 [consul_node:children]
 admin
 client
 
-#nomad hosts
 [nomad:children]
 admin
 client
@@ -40,18 +36,27 @@ client
 [traefik:children]
 admin
 
-# observability
+# observability groups
 [minio]
-admin0.jochen.kangaroot.net
+cl0.example.net
 
-[loki:children]
+[minio_client:children]
 admin
+client
+
+[loki]
+cl0.example.net
+cl1.example.net
+cl2.example.net
 
 [loki_server]
-admin2.jochen.kangaroot.net
+cl2.example.net
 
 [grafana]
-admin1.jochen.kangaroot.net
+cl1.example.net
 
 [prometheus]
-admin2.jochen.kangaroot.net
+cl2.example.net
+
+[postgresql]
+cl0.example.net

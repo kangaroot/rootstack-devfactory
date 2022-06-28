@@ -87,7 +87,7 @@
         path: /home/{{ admin_username }}/.ssh/authorized_keys
     subnet_name: "{{ vm_subnet_name }}"
     state: "{{ 'absent' if 'destroy' in ansible_run_tags else 'present' }}"
-    storage_account_name: "kanga{{ rg }}storage"
+    storage_account_name: "{{ storage_account_name }}"
     managed_disk_type: Standard_LRS
     os_disk_name: "{{ vm_name }}-osdisk"
     os_disk_size_gb: "{{ vm_os_disk_size | default(50) }}"

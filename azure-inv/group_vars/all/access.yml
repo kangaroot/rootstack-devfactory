@@ -1,14 +1,15 @@
 ---
+# my working example, change name, key, full, shell, password_hash and uncomment groups
 access_admin_users:
-  - name: sejo
-    key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCrI5YzM/SlQpf1HJBwJNl2kEj0wLFuyu8gdSHOiG9Z2I4GD1uoUr9ObNYxZ76xl/2iNrcpTUWlq0c6HXn4q0Tx8gS+5hancU1/3PasEJnVIOyS3F53DEMxtHGGiN5ynQtUmhxqlfwrDsYGOor4jVPDIrj0K9qij4qSmnPZv5xaOQo3GTTeum/Yf60xqj5oXsEypOemRyFYZvTxENmNNytgexUJcEqc8BYUqP1U6H1DH6SYgrwmLR3aaNN7t0BsNhjuQpFUKSRpmGBIjkz3iuowSvnu79raIAxuun/pi55aoaOPhhSKvA543/tBasUwq+21KftSX5DxGv4w8bh6L0o5IAJEVLbG+cc82GJSsb1VNBLy/wyvl9g+jzdlMSQKle7gKk51zYTqpwb043TnwcLydOcARo8xb7sVje7S3ROTkBikLIdsBss+XZo/JGa7fHDjKViuP6By6BDQCXkuHa4AxWmxvwUQczcavAxczeH/2ezqNEFgyMzxYlAdKBpCnA0= sejo@octomore
-    full: Jochen Maes
-    shell: /bin/bash
-    groups:
-      - admin
-      - wheel
-    # test
-    password_hash: $6$72PSUsnNIRFFRjyp$slv0TRe/ROcEGfv/69JNiITPfJGszFdULXToohmvvUzNavI2i7hQH.uq2dbY/ZxGDEx/cyy452tpN0Uvt3Yjy0
+  #- name: sejo
+  #  key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCrI5YzM/SlQpf1HJBwJNl2kEj0wLFuyu8gdSHOiG9Z2I4GD1uoUr9ObNYxZ76xl/2iNrcpTUWlq0c6HXn4q0Tx8gS+5hancU1/3PasEJnVIOyS3F53DEMxtHGGiN5ynQtUmhxqlfwrDsYGOor4jVPDIrj0K9qij4qSmnPZv5xaOQo3GTTeum/Yf60xqj5oXsEypOemRyFYZvTxENmNNytgexUJcEqc8BYUqP1U6H1DH6SYgrwmLR3aaNN7t0BsNhjuQpFUKSRpmGBIjkz3iuowSvnu79raIAxuun/pi55aoaOPhhSKvA543/tBasUwq+21KftSX5DxGv4w8bh6L0o5IAJEVLbG+cc82GJSsb1VNBLy/wyvl9g+jzdlMSQKle7gKk51zYTqpwb043TnwcLydOcARo8xb7sVje7S3ROTkBikLIdsBss+XZo/JGa7fHDjKViuP6By6BDQCXkuHa4AxWmxvwUQczcavAxczeH/2ezqNEFgyMzxYlAdKBpCnA0= sejo@octomore
+  #  full: Jochen Maes
+  #  shell: /bin/bash
+  #  groups:
+  #    - admin
+  #    - wheel
+  # test
+  #  password_hash: $6$72PSUsnNIRFFRjyp$slv0TRe/ROcEGfv/69JNiITPfJGszFdULXToohmvvUzNavI2i7hQH.uq2dbY/ZxGDEx/cyy452tpN0Uvt3Yjy0
 access_users:
   # add application users here as well
   - name: consul
@@ -20,4 +21,3 @@ access_admin_group: admin
 #      - bleh
 #      - blah
 access_user_groups: []
-

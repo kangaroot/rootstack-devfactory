@@ -1,7 +1,8 @@
 ---
 nomad_job_prometheus:
-  affinity_value: admin2
+  affinity_value: cl2
   volumes:
     - dir: /data/prometheus
       container_dir: /prometheus
-
+  service_ports:
+    - 9090

@@ -29,6 +29,15 @@ job "traefik" {
             env {
                 PORT = "80"
                 NODE_IP = "{{ vm_ip }}"
+                {% if job_fact.acme_challenge is defined %}
+                {% if azure %}
+                AZURE_CLIENT_ID = "{{ client_id }}"
+                AZURE_CLIENT_SECRET = "{{ client_secret }}"
+                AZURE_SUBSCRIPTION_ID = "{{ subscription_id }}"
+                AZURE_TENANT_ID = "{{ tenant_id }}"
+                AZURE_RESOURCE_GROUP = "{{ rg }}"
+                {% endif %}
+                {% endif %}
             }
 
             driver = "docker"
@@ -113,6 +122,12 @@ entryPoint = "traefik"
       storage = "/config/{{ nomad_datacenter }}.json"
       # comment for production
       caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+{% endif %}
+{% if job_fact.acme_challenge is defined %}
+{% if job_fact.acme_challenge == 'dns' and azure %}
+[certificatesResolvers.sejo.acme.dnsChallenge]
+    provider = "azure"
+{% endif %}
 {% endif %}
 EOF
 

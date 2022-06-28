@@ -1,0 +1,14 @@
+---
+vault_dirs:
+  - /opt/vault/data
+  - /etc/vault.d
+  - /var/log/vault
+
+kms:
+  type: "azure"
+  vault_name: # name your vault
+  vault_key: # name your unseal-key
+kms_subscription_id:
+kms_client_id:
+kms_object_id:
+kms_client_secret:
