@@ -1,7 +1,8 @@
 ---
 nomad_job_minio:
-  affinity_value: admin0
+  affinity_value: cl0
   volumes:
-    - dir: minio
-      container_dir: "/data/{{ vm_name }}/minio"
-
+    - container_dir: /minio
+      dir: "/data/{{ vm_name }}/minio"
+  service_ports:
+    - 9000

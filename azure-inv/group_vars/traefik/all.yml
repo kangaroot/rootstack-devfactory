@@ -1,7 +1,11 @@
 ---
 nomad_job_traefik:
-  certificate_email: jmaes@kangaroot.net
+  certificate_email: #example jmaes@kangaroot.net
+  acme_challenge: dns
   volumes:
     - dir: /data/traefik
       container_dir: /config
-
+  service_ports:
+    - 8081
+    - 80
+    - 443

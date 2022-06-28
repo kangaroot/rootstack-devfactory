@@ -43,7 +43,7 @@
         group: root
       become: true
       run_once: true
-      delegate_to: bastion.jochen.kangaroot.net
+      delegate_to: "bastion.{{ zone }}"
       register: resolved_config
       tags:
         - create
@@ -56,7 +56,7 @@
       become: true
       run_once: true
       when: resolved_config.changed
-      delegate_to: bastion.jochen.kangaroot.net
+      delegate_to: "bastion.{{ zone }}"
       tags:
         - create
         - resolved

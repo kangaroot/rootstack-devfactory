@@ -1,3 +1,3 @@
 ---
-nomad_datacenter: kangaroot
-network_cidr: 10.42.0.0/24
+nomad_datacenter: # example sejoplex
+network_cidr: # example 10.42.0.0/24

@@ -4,7 +4,7 @@
     resource_group: "{{ rg }}"
     account_type: "Standard_LRS"
     force_delete_nonempty: true
-    name: "kanga{{ rg }}storage"
+    name: "{{ storage_account_name }}"
     state: "{{'absent' if 'destroy' in ansible_run_tags else 'present' }}"
   run_once: true
   tags:
