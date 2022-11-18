@@ -80,11 +80,11 @@
       version: "{{ vm_image.version }}"
     ssh_password_enabled: False
     ssh_public_keys:
-      - key_data: "{{ access_admin_users
-          | selectattr('name', 'match', 'sejo')
+      - path: "/home/{{ admin_username }}/.ssh/authorized_keys"
+        key_data: "{{ access_admin_users
+          | selectattr('name')
           | map(attribute='key')
           | first }}"
-        path: /home/{{ admin_username }}/.ssh/authorized_keys
     subnet_name: "{{ vm_subnet_name }}"
     state: "{{ 'absent' if 'destroy' in ansible_run_tags else 'present' }}"
     storage_account_name: "{{ storage_account_name }}"
@@ -107,7 +107,7 @@
     resource_group: "{{ rg }}"
     record_type: A
     relative_name: bastion
-    zone_name: jochen.kangaroot.net
+    zone_name: "{{ zone }}"
     time_to_live: 5
     records:
       - entry: "{{ azure_vm.properties.networkProfile.networkInterfaces[0].properties.ipConfigurations[0].properties.publicIPAddress.properties.ipAddress }}"
@@ -152,7 +152,7 @@
       record_type: A
       relative_name: bastion
       state: absent
-      zone_name: jochen.kangaroot.net
+      zone_name: "{{ zone }}"
     delegate_to: localhost
   - name: delete network interface
     azure.azcollection.azure_rm_networkinterface:
