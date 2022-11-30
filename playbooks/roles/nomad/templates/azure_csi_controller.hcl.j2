@@ -1,0 +1,67 @@
+job "{{ nomad_csi_plugin_job_name }}" {
+  datacenters = ["{{ nomad_datacenter }}"]
+  type = "service"
+
+  group "controller" {
+    count = 2
+
+    constraint { 
+      distinct_hosts = true
+    }
+
+    # disable deployments
+    update {
+      max_parallel = 0
+    }
+    task "controller" {
+      driver = "docker"
+
+      template {
+        change_mode = "noop"
+        destination = "local/azure.json"
+        data = <<EOH
+{
+"cloud":"AzurePublicCloud",
+"tenantId": "{{ tenant_id }}",
+"subscriptionId": "{{ subscription_id }}",
+"aadClientId": "{{ client_id }}",
+"aadClientSecret": "{{ client_secret }}",
+"resourceGroup": "{{ rg }}",
+"location": "westeurope"
+}
+EOH
+      }
+
+      env {
+        AZURE_CREDENTIAL_FILE = "/etc/kubernetes/azure.json"
+      }
+
+      config {
+        image = "{{ nomad_csi_plugin_image }}"
+
+        volumes = [
+          "local/azure.json:/etc/kubernetes/azure.json"
+        ]
+
+        args = [
+          "--endpoint=unix://csi/csi.sock",
+          "--logtostderr",
+          "--v=5",
+        ]
+      }
+
+      csi_plugin {
+        id        = "{{ nomad_csi_plugin_id }}"
+        type      = "controller"
+        mount_dir = "/csi"
+      }
+
+      resources {
+        memory = 256
+      }
+      # Give the plugin enough time to shutdown gracefully
+      kill_timeout = "2m"
+    }
+  }
+}
+

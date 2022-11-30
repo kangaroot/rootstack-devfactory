@@ -1,0 +1,25 @@
+
+ - name: Deploy CSI Controller plugin
+   community.general.nomad_job:
+     host: "nomad.service.consul"
+     state: present
+     content: "{{ lookup('ansible.builtin.template', item + '.hcl.j2') }}"
+     use_ssl: false
+   register: nomad_job_spawn
+   retries: 10
+   delay: 5
+   until: nomad_job_spawn.failed == false
+
+ - name: Check the job state is healthy
+   ansible.builtin.uri:
+     url: "http://nomad.service.consul:4646/v1/job/{{ job_name }}"
+     method: GET
+     # headers:
+     #   X-Nomad-Token: "{{ nomad_token }}"
+     remote_src: yes
+   register: job_status
+   until: job_status | json_query('json.Status') == 'running' 
+
+ - name: debug
+   debug:
+     msg: "{{ nomad_job_spawn }}"

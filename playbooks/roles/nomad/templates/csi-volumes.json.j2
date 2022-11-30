@@ -1,0 +1,27 @@
+{
+  "Volumes": [
+    {
+      "ID": "{{ item.id }}",
+      "Name": "{{ item.name }}",
+      "Namespace": "default",
+      "PluginID": "{{ nomad_csi_plugin_id }}",
+      "MountOptions": {
+        "FsType": "ext4",
+        "MountFlags": ["ro", "noatime"]
+      },
+      "RequestedCapacityMin": 53687091200,
+      "RequestedCapacityMax": 53687091200,
+      "RequestedCapabilities": [
+        {
+          "AccessMode": "single-node-writer",
+          "AttachmentMode": "file-system"
+        },
+        {
+          "AccessMode": "single-node-writer",
+          "AttachmentMode": "block-device"
+        }
+      ]
+    }
+  ]
+}
+
