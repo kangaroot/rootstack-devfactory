@@ -4,20 +4,9 @@
   ansible.builtin.uri:
     url: "http://nomad.service.consul:4646/v1/volume/csi/{{ item.id }}"
     method: GET
-    # headers:
-    #   X-Nomad-Token: "{{ nomad_token }}"
     remote_src: yes
   register: volume_exists
   ignore_errors: true
-
-- name: Check variables
-  ansible.builtin.debug:
-    msg: |
-      Name: {{ item.name }}
-      Id: {{ item.id }}
-      PluginID: {{ nomad_csi_plugin_id }}
-
-      
 
 - name: Check for state of CSI Plugins to prevent race
   block:
@@ -25,57 +14,21 @@
     ansible.builtin.uri:
       url: "http://nomad.service.consul:4646/v1/job/plugin-azure_csi_controller"
       method: GET
-      # headers:
-      #   X-Nomad-Token: "{{ nomad_token }}"
       remote_src: yes
     register: controller_status
     until: controller_status | json_query('json.Status') == 'running'
-
   - name: Check node plugin
     ansible.builtin.uri:
       url: "http://nomad.service.consul:4646/v1/job/plugin-azure_csi_node"
       method: GET
-      # headers:
-      #   X-Nomad-Token: "{{ nomad_token }}"
       remote_src: yes
     register: node_status
     until: node_status | json_query('json.Status') == 'running' 
-
-
-- name: Create CSI volume with Nomad API
-  ansible.builtin.uri:
-    url: http://nomad.service.consul:4646/v1/volume/csi/{{ item.id }}/create
-    method: PUT
-    # headers:
-    #   X-Nomad-Token: "{{ nomad_token }}"
-    # body: "{{ lookup('template', 'csi-volumes.json.j2') }}"
-    body_format: json
-    body: >
-      {
-        "Volumes": [
-          {
-            "ID": "{{ item.id }}",
-            "Name": "{{ item.name }}",
-            "Namespace": "default",
-            "PluginID": "{{ nomad_csi_plugin_id }}",
-            "MountOptions": {
-              "FsType": "ext4",
-              "MountFlags": ["ro", "noatime"],
-            },
-            "RequestedCapacityMin": 53687091200,
-            "RequestedCapacityMax": 53687091200,
-            "RequestedCapabilities": [
-              {
-                "AccessMode": "single-node-writer",
-                "AttachmentMode": "file-system"
-              },
-              {
-                "AccessMode": "single-node-writer",
-                "AttachmentMode": "block-device"
-              }
-            ],
-          }
-        ]
-      }
-    remote_src: yes
+  - name: Create CSI volume with Nomad API
+    ansible.builtin.uri:
+      url: http://nomad.service.consul:4646/v1/volume/csi/{{ item.id }}/create
+      method: PUT
+      body_format: json
+      body: "{{ lookup('template', 'csi-volumes.json.j2') }}" 
+      remote_src: yes
   when: volume_exists.status == 404
