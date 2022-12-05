@@ -17,7 +17,7 @@ job "{{ nomad_csi_plugin_job_name }}" {
 "aadClientId": "{{ client_id }}",
 "aadClientSecret": "{{ client_secret }}",
 "resourceGroup": "{{ rg }}",
-"location": "westeurope"
+"location": "{{ azure_region }}"
 }
 EOH
       }
@@ -28,6 +28,7 @@ EOH
 
       config {
         image = "{{ nomad_csi_plugin_image }}"
+        network_mode = "host"
         volumes = [
           "local/azure.json:/etc/kubernetes/azure.json"
         ]
