@@ -3,14 +3,14 @@
     {
       "ID": "{{ item.id }}",
       "Name": "{{ item.name }}",
-      "Namespace": "default",
+      "Namespace": "{{ item.namespace }}",
       "PluginID": "{{ nomad_csi_plugin_id }}",
       "MountOptions": {
-        "FsType": "ext4",
-        "MountFlags": ["ro", "noatime"]
+        "FsType": "{{ item.filesystem }}",
+        "MountFlags": ["noatime"]
       },
-      "RequestedCapacityMin": 53687091200,
-      "RequestedCapacityMax": 53687091200,
+      "RequestedCapacityMin": {{ item.size }},
+      "RequestedCapacityMax": {{ item.size }},
       "RequestedCapabilities": [
         {
           "AccessMode": "single-node-writer",
