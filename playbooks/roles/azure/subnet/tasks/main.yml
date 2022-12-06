@@ -25,7 +25,7 @@
 - name: create or destroy subnet
   azure.azcollection.azure_rm_subnet:
     resource_group: "{{ rg }}"
-    name: jochen-subnet-vm
+    name: "{{ vm_subnet_name }}"
     address_prefix_cidr: "10.42.0.0/24"
     virtual_network_name: main_network
     security_group: "{{ rg }}-nsg"

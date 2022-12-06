@@ -125,7 +125,7 @@ entryPoint = "traefik"
 {% endif %}
 {% if job_fact.acme_challenge is defined %}
 {% if job_fact.acme_challenge == 'dns' and azure %}
-[certificatesResolvers.sejo.acme.dnsChallenge]
+[certificatesResolvers.{{ consul_dc_name }}.acme.dnsChallenge]
     provider = "azure"
 {% endif %}
 {% endif %}
