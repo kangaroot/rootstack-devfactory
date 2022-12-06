@@ -1,0 +1,90 @@
+job "{{ nomad_gitlab_job_name }}" {
+  datacenters = [{{ nomad_datacenter }}]
+  type = service
+
+  group "gitlab" {
+    count = "{{ nomad_gitlab_group_count }}"
+    volume "{{ nomad_gitlab_volume.name }}"{
+      type = "{{ nomad_gitlab_volume.type }}"
+      read_only = {{ nomad_gitlab_volume.read_only }}
+      source = "{{ nomad_gitlab_volume.id }}"
+    }
+    network {
+      mode = "bridge"
+      port "gitlab_http" {
+        to = 7000
+        host_network = "public"
+      }
+      port "git_ssh" {
+        static = 7722
+        host_network = "public"
+      }
+    }
+
+    service {
+      name = "gitlab_http"
+      port = "gitlab_http"
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.gitlab.tls=true",
+        "traefik.http.routers.gitlab.entrypoints=https",
+        "traefik.http.routers.gitlab.tls.certResolver={{ consul_dc_name }}",
+        "traefik.http.routers.gitlab.tls.domains[0].main=gitlab.{{ zone }}",
+      ]
+      check {
+        type = "http"
+        path = "/-/health"
+        method = "GET"
+        interval = "10s"
+        timeout = "2s"
+        }
+      }
+    service {
+        name = "gitlab_ssh"
+        port = "gitlab_ssh"
+        check {
+            name = "ssh"
+            type = "tcp"
+            interval = "10s"
+            timeout = "1s"
+            
+          }
+      }
+
+    task "gitlab" {
+      driver = "docker"
+
+      config {
+        image          = "{{ nomad_gitlab_docker_image }}"
+        ports          = ["gitlab_http", "git_ssh"]
+        volumes = [
+          "{{ nomad_gitlab_volume_container_mount_point }}/config:/etc/gitlab",
+         # "{{ nomad_gitlab_volume_container_mount_point}}/logs:/var/log/gitlab",
+          "{{ nomad_gitlab_volume_container_mount_point }}/data:/var/opt/gitlab"
+        ]
+        {% if 'aarch64' != ansible_architecture %}
+        logging {
+          type = "loki"
+        }
+        {% endif %}
+      }
+
+      volume_mount {
+          volume = "{{ nomad_gitlab_volume.id }}"
+          destination = "{{ nomad_gitlab_volume_container_mount_point }}"
+          read_only = false
+      }
+
+      env {
+       {{ nomad_gitlab_docker_environment }} 
+      }
+
+      
+    }
+    service {
+      name = "gitlab"
+      port = "gitlab_http"
+    }
+  }
+}
+
