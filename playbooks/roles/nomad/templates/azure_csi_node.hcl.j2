@@ -1,0 +1,59 @@
+job "{{ nomad_csi_plugin_job_name }}" {
+  datacenters = ["{{ nomad_datacenter }}"]
+  type = "system"
+
+  group "nodes" {
+    task "node" {
+      driver = "docker"
+
+      template {
+        change_mode = "noop"
+        destination = "local/azure.json"
+        data = <<EOH
+{
+"cloud":"AzurePublicCloud",
+"tenantId": "{{ tenant_id }}",
+"subscriptionId": "{{ subscription_id }}",
+"aadClientId": "{{ client_id }}",
+"aadClientSecret": "{{ client_secret }}",
+"resourceGroup": "{{ rg }}",
+"location": "{{ azure_region }}"
+}
+EOH
+      }
+
+      env {
+        AZURE_CREDENTIAL_FILE = "/etc/kubernetes/azure.json"
+      }
+
+      config {
+        image = "{{ nomad_csi_plugin_image }}"
+        network_mode = "host"
+        volumes = [
+          "local/azure.json:/etc/kubernetes/azure.json"
+        ]
+        args = [
+          "--nodeid={{ nomad_csi_plugin_node_id }}",
+          "--endpoint=unix://csi/csi.sock",
+          "--logtostderr",
+          "--v=5",
+        ]
+        privileged = true
+      }
+
+      csi_plugin {
+        id        = "{{ nomad_csi_plugin_id }}"
+        type      = "node"
+        mount_dir = "/csi"
+      }
+
+      resources {
+        memory = 256
+      }
+
+      # ensuring the plugin has time to shut down gracefully
+      kill_timeout = "2m"
+    }
+  }
+}
+
