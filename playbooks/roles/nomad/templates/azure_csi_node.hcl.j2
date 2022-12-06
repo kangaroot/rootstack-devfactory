@@ -33,7 +33,7 @@ EOH
           "local/azure.json:/etc/kubernetes/azure.json"
         ]
         args = [
-          "--nodeid={{ nomad_csi_plugin_node_id }}",
+          "--nodeid=${attr.unique.hostname}",
           "--endpoint=unix://csi/csi.sock",
           "--logtostderr",
           "--v=5",

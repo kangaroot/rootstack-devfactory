@@ -30,3 +30,34 @@
   failed_when: false
   loop: "{{ nomad_namespaces }}"
   run_once: true
+
+- block:
+  - name: Setup csi plugins 
+    ansible.builtin.include_tasks: 
+      file: "csi_plugins.yml"
+      apply:
+        tags: 
+          - setup-all
+          - setup-csi
+    loop:
+       - azure_csi_controller
+       - azure_csi_node
+    tags:
+      - setup-all
+      - setup-csi
+    when: nomad_csi_volumes is defined
+    run_once: true
+  
+  - name: Create csi volumes
+    ansible.builtin.include_tasks: 
+      file: "csi_volumes.yml"
+      apply:
+        tags: 
+          - setup-all
+          - setup-csi
+    loop: "{{ nomad_csi_volumes }}"
+    tags:
+      - setup-all
+      - setup-csi
+    when: nomad_csi_volumes is defined
+    run_once: true

@@ -3,11 +3,26 @@
   hosts: all:!bastion
   roles:
     - role: docker
+      tags:
+        - setup-all
+        - setup-docker
     - role: consul
+      tags:
+        - setup-all
+        - setup-consul
     - role: dns
+      tags:
+        - setup-all
+        - setup-dns
 
 - name: setup nomad
   import_playbook: sub_plays/nomad.yml
+  tags:
+    - setup-all
+    - setup-nomad
 
 - name: setup system jobs on nomad
   import_playbook: runtime.yml
+  tags:
+    - setup-all
+    - setup-runtime

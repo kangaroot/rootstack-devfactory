@@ -24,6 +24,7 @@
       remote_src: yes
     register: node_status
     until: node_status | json_query('json.Status') == 'running' 
+
   - name: Create CSI volume with Nomad API
     ansible.builtin.uri:
       url: http://nomad.service.consul:4646/v1/volume/csi/{{ item.id }}/create
