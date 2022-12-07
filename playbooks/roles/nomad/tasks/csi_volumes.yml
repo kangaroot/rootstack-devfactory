@@ -32,4 +32,8 @@
       body_format: json
       body: "{{ lookup('template', 'csi-volumes.json.j2') }}" 
       remote_src: yes
+    register: csi_volume
+    until: csi_volume.status == 200
+    retries: 5
+    delay: 10 
   when: volume_exists.status == 404
