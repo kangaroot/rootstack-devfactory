@@ -3,9 +3,6 @@
   ansible.builtin.uri:
     url: "http://nomad.service.consul:4646/v1/job/{{ nomad_gitlab_job_name }}"
     method: GET
-    # TODO Will be needed if ACL is ever set up 
-    # headers:
-    #   X-Nomad-Token: "{{ nomad_token }}"
     remote_src: yes
   register: pre_job_status
   ignore_errors: true
@@ -32,11 +29,11 @@
     ansible.builtin.uri:
       url: "http://nomad.service.consul:4646/v1/job/{{ nomad_gitlab_job_name }}"
       method: GET
-      # TODO Will be needed if ACL is ever set up 
-      # headers:
-      #   X-Nomad-Token: "{{ nomad_token }}"
       remote_src: yes
+    async: 600
+    poll: 10
     register: job_status
     until: job_status | json_query('json.Status') == 'running' 
-    run_once: true
+    retries: 10
+    delay: 10
   when: pre_job_status.status == 404 
