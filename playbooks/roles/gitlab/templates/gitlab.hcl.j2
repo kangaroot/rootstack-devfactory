@@ -38,6 +38,13 @@ job "{{ nomad_gitlab_job_name }}" {
         "traefik.http.routers.gitlab.tls.certResolver={{ consul_dc_name }}",
         "traefik.http.routers.gitlab.tls.domains[0].main=gitlab.{{ zone }}",
       ]
+      check {
+        type = "http"
+        path = "/-/health"
+        method = "GET"
+        interval = "10s"
+        timeout = "2s"
+        }
       }
     service {
       name = "{{ nomad_gitlab_services[1].name }}"
@@ -87,6 +94,8 @@ nginx['real_ip_trusted_addresses'] = {{ nomad_gitlab_docker_configuration.truste
 nginx['real_ip_header'] = 'X-Forwarded-For'
 nginx['real_ip_recursive'] = '{{ nomad_gitlab_docker_configuration.real_ip_recursive }}'
 gitlab_rails['gitlab_shell_ssh_port'] = {{ nomad_gitlab_ssh_port }}
+gitlab_rails['monitoring_whitelist'] = {{ nomad_gitlab_docker_configuration.monitoring_whitelist }} 
+gitlab_rails['initial_root_password'] = "{{ nomad_gitlab_docker_configuration.initial_root_password }}"
 EOH
        destination = "local/gitlab.rb" 
      }
