@@ -46,9 +46,8 @@ job "{{ nomad_gitlab_job_name }}" {
         image          = "{{ nomad_gitlab_docker_image }}"
         ports          = ["{{ nomad_gitlab_network[0].name }}"]
         volumes = [
-          "{{ nomad_gitlab_volume_container_mount_point }}/config:/etc/gitlab",
           "{{ nomad_gitlab_volume_container_mount_point }}/data:/var/opt/gitlab",
-          "{{ nomad_gitlab_volume_container_mount_point }}/config/gitlab.rb:/etc/gitlab/gitlab.rb"
+          "local/gitlab.rb:/etc/gitlab/gitlab.rb"
         ]
         {% if 'aarch64' != ansible_architecture %}
         logging {
@@ -64,15 +63,15 @@ job "{{ nomad_gitlab_job_name }}" {
       }
 
       template {
-        data = <<EOF
+        data = <<EOH
 external_url '{{ nomad_gitlab_docker_configuration.externalurl }}'
 nginx['listen_https'] = false
 nginx['listen_port'] = {{ nomad_gitlab_docker_configuration.listenport }}
 nginx['real_ip_trusted_addresses'] = {{ nomad_gitlab_docker_configuration.trusted_addresses }}
 nginx['real_ip_header'] = 'X-Forwarded-For'
 nginx['real_ip_recursive'] = '{{ nomad_gitlab_docker_configuration.real_ip_recursive }}'
-EOF
-       destination = "{{ nomad_gitlab_volume_container_mount_point }}/config/gitlab.rb" 
+EOH
+       destination = "local/gitlab.rb" 
      }
     }
   }
