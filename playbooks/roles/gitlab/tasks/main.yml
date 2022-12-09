@@ -9,10 +9,6 @@
   run_once: true
 
 - block:
-  - name: Print effective job spec
-    ansible.builtin.debug:
-      msg: "{{ lookup('ansible.builtin.template', nomad_gitlab_job_name + '.hcl.j2') }}"
-
   - name: spawn nomad job {{ nomad_gitlab_job_name }}
     community.general.nomad_job:
       host: "nomad.service.consul"
