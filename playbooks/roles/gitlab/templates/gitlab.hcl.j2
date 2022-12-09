@@ -22,6 +22,10 @@ job "{{ nomad_gitlab_job_name }}" {
         to = {{ nomad_gitlab_network[0].port }}
         host_network = "{{ nomad_gitlab_network[0].hostnetwork }}"
       }
+      port "{{ nomad_gitlab_network[1].name }}" {
+        static = {{ nomad_gitlab_network[1].port }}
+        host_network = "{{ nomad_gitlab_network[1].hostnetwork }}"
+      }
     }
 
     service {
@@ -33,6 +37,17 @@ job "{{ nomad_gitlab_job_name }}" {
         "traefik.http.routers.gitlab.entrypoints=https",
         "traefik.http.routers.gitlab.tls.certResolver={{ consul_dc_name }}",
         "traefik.http.routers.gitlab.tls.domains[0].main=gitlab.{{ zone }}",
+      ]
+      }
+    service {
+      name = "{{ nomad_gitlab_services[1].name }}"
+      port = "{{ nomad_gitlab_services[1].port }}"
+      tags = [
+        "traefik.enable=true",
+        "traefik.tcp.routers.gitlab-ssh.rule=HostSNI(`*`)",
+        "traefik.tcp.routers.gitlab-ssh.entrypoints=ssh",
+        "traefik.tcp.routers.gitlab-ssh.service={{ nomad_gitlab_services[1].name }}",
+        "traefik.tcp.services.gitlab-ssh.loadbalancer.server.port={{ nomad_gitlab_ssh_port }}",
       ]
       }
 
@@ -47,7 +62,8 @@ job "{{ nomad_gitlab_job_name }}" {
         ports          = ["{{ nomad_gitlab_network[0].name }}"]
         volumes = [
           "{{ nomad_gitlab_volume_container_mount_point }}/data:/var/opt/gitlab",
-          "local/gitlab.rb:/etc/gitlab/gitlab.rb"
+          "local/gitlab.rb:/etc/gitlab/gitlab.rb",
+          "local/sshd_config:/assets/sshd_config"
         ]
         {% if 'aarch64' != ansible_architecture %}
         logging {
@@ -70,9 +86,42 @@ nginx['listen_port'] = {{ nomad_gitlab_docker_configuration.listenport }}
 nginx['real_ip_trusted_addresses'] = {{ nomad_gitlab_docker_configuration.trusted_addresses }}
 nginx['real_ip_header'] = 'X-Forwarded-For'
 nginx['real_ip_recursive'] = '{{ nomad_gitlab_docker_configuration.real_ip_recursive }}'
+gitlab_rails['gitlab_shell_ssh_port'] = {{ nomad_gitlab_ssh_port }}
 EOH
        destination = "local/gitlab.rb" 
      }
+     template {
+       data = <<EOH
+Port {{ nomad_gitlab_ssh_port }} 
+ChallengeResponseAuthentication no
+HostKey /etc/gitlab/ssh_host_rsa_key
+HostKey /etc/gitlab/ssh_host_ecdsa_key
+HostKey /etc/gitlab/ssh_host_ed25519_key
+Protocol 2
+PermitRootLogin no
+PasswordAuthentication no
+MaxStartups 100:30:200
+AllowUsers git
+PrintMotd no
+PrintLastLog no
+PubkeyAuthentication yes
+AuthorizedKeysFile %h/.ssh/authorized_keys /gitlab-data/ssh/authorized_keys
+AuthorizedKeysCommand /opt/gitlab/embedded/service/gitlab-shell/bin/gitlab-shell-authorized-keys-check git %u %k
+AuthorizedKeysCommandUser git
+
+# With "UsePAM yes" the "!" is seen as a password disabled account and not fully locked so ssh public key login works
+# Please make sure that the account is created without passwordlogin ("*" in /etc/shadow) or configure pam. 
+# Issue #5891 https://gitlab.com/gitlab-org/omnibus-gitlab
+UsePAM no
+
+# Disabling use DNS in ssh since it tends to slow connecting
+UseDNS no
+
+# Enable the use of Git protocol v2
+AcceptEnv GIT_PROTOCOL
+EOH
+        destination = "local/sshd_config"
+       }
     }
   }
 }
