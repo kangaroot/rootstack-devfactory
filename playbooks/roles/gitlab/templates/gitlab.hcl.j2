@@ -67,10 +67,19 @@ job "{{ nomad_gitlab_job_name }}" {
       config {
         image          = "{{ nomad_gitlab_docker_image }}"
         ports          = ["{{ nomad_gitlab_network[0].name }}"]
+        mount {
+            type = "bind"
+            source = "local/gitlab.rb"
+            target = "/etc/gitlab/gitlab.rb"
+            bind_options = {
+                propagation = "rshared"
+              }
+          }
         volumes = [
           "{{ nomad_gitlab_volume_container_mount_point }}/data:/var/opt/gitlab",
-          "local/gitlab.rb:/etc/gitlab/gitlab.rb",
-          "local/sshd_config:/assets/sshd_config"
+          "{{ nomad_gitlab_volume_container_mount_point }}/config:/etc/gitlab",
+          #"local/gitlab.rb:/etc/gitlab/gitlab.rb",
+          #"local/sshd_config:/assets/sshd_config"
         ]
         {% if 'aarch64' != ansible_architecture %}
         logging {
@@ -95,7 +104,6 @@ nginx['real_ip_header'] = 'X-Forwarded-For'
 nginx['real_ip_recursive'] = '{{ nomad_gitlab_docker_configuration.real_ip_recursive }}'
 gitlab_rails['gitlab_shell_ssh_port'] = {{ nomad_gitlab_ssh_port }}
 gitlab_rails['monitoring_whitelist'] = {{ nomad_gitlab_docker_configuration.monitoring_whitelist }} 
-gitlab_rails['initial_root_password'] = "{{ nomad_gitlab_docker_configuration.initial_root_password }}"
 EOH
        destination = "local/gitlab.rb" 
      }
