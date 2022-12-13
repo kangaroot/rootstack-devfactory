@@ -71,6 +71,19 @@
   delay: 5
   until: nomad_job_spawn.failed == false
 
+- name: Check the job state is healthy
+  ansible.builtin.uri:
+    url: "http://nomad.service.consul:4646/v1/job/{{ job_name }}"
+    method: GET
+    remote_src: yes
+  async: 600
+  poll: 5
+  register: job_status
+  until: job_status | json_query('json.Status') == 'running' 
+  retries: 5
+  delay: 3
+  
+
 - name: debug
   debug:
     msg: "{{ nomad_job_spawn }}"
