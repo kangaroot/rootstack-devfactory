@@ -1,20 +1,35 @@
----
+
+- name: Check to see if Gitlab job is already running 
+  ansible.builtin.uri:
+    url: "http://nomad.service.consul:4646/v1/job/{{ nomad_gitlab_job_name }}"
+    method: GET
+    remote_src: yes
+  register: pre_job_status
+  ignore_errors: true
+  run_once: true
 
 - block:
-    - ansible.builtin.include_tasks: "setup.yml"
-      when: "gitlab_enabled | bool"
-    - ansible.builtin.include_tasks: "auth_setup.yml"
-      when: "gitlab_enabled | bool"
-    - name: Create Gitlab Groups
-      vars:
-        groups: "{{ item }}"
-      include: create_groups.yml
-      loop: "{{ nomad_gitlab_groups | list }}"
-    - name: Create Gitlab Users
-      vars:
-        users: "{{ item }}"
-      include: create_users.yml 
-      loop: "{{ nomad_gitlab_groups | subelements('members') }}"
-
-  tags:
-    - gitlab
+  - name: spawn nomad job {{ nomad_gitlab_job_name }}
+    community.general.nomad_job:
+      host: "nomad.service.consul"
+      state: present
+      content: "{{ lookup('ansible.builtin.template', nomad_gitlab_job_name + '.hcl.j2') }}"
+      use_ssl: false
+    register: nomad_job_spawn
+    retries: 10
+    delay: 5
+    until: nomad_job_spawn.failed == false
+    run_once: true
+  
+  - name: Check the job state is healthy
+    ansible.builtin.uri:
+      url: "http://nomad.service.consul:4646/v1/job/{{ nomad_gitlab_job_name }}"
+      method: GET
+      remote_src: yes
+    async: 600
+    poll: 10
+    register: job_status
+    until: job_status | json_query('json.Status') == 'running' 
+    retries: 10
+    delay: 10
+  when: pre_job_status.status == 404 

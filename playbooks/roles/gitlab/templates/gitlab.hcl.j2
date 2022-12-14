@@ -104,6 +104,8 @@ nginx['real_ip_header'] = 'X-Forwarded-For'
 nginx['real_ip_recursive'] = '{{ nomad_gitlab_docker_configuration.real_ip_recursive }}'
 gitlab_rails['gitlab_shell_ssh_port'] = {{ nomad_gitlab_ssh_port }}
 gitlab_rails['monitoring_whitelist'] = {{ nomad_gitlab_docker_configuration.monitoring_whitelist }} 
+gitlab_rails['initial_root_password'] = "{{ nomad_gitlab_docker_configuration.initial_root_password }}"
+gitlab_rails['initial_shared_runners_registration_token'] = "{{ nomad_gitlab_docker_configuration.shared_runner_registration_token }}"
 EOH
        destination = "local/gitlab.rb" 
      }
