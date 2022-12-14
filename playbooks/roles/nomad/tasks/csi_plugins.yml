@@ -1,5 +1,5 @@
 
- - name: Deploy CSI Controller plugin
+ - name: Deploy CSI plugin
    community.general.nomad_job:
      host: "nomad.service.consul"
      state: present
@@ -12,10 +12,8 @@
 
  - name: Check the job state is healthy
    ansible.builtin.uri:
-     url: "http://nomad.service.consul:4646/v1/job/{{ job_name }}"
+     url: "http://nomad.service.consul:4646/v1/job/plugin-{{ item }}"
      method: GET
-     # headers:
-     #   X-Nomad-Token: "{{ nomad_token }}"
      remote_src: yes
    register: job_status
    until: job_status | json_query('json.Status') == 'running' 

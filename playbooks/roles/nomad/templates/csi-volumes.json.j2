@@ -9,8 +9,8 @@
         "FsType": "{{ item.filesystem }}",
         "MountFlags": ["noatime"]
       },
-      "RequestedCapacityMin": {{ item.size }},
-      "RequestedCapacityMax": {{ item.size }},
+      "RequestedCapacityMin": {{ item.minsize }},
+      "RequestedCapacityMax": {{ item.maxsize }},
       "RequestedCapabilities": [
         {
           "AccessMode": "single-node-writer",
