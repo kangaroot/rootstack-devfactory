@@ -27,14 +27,19 @@
             port: 8081
             interval: 5
             fail_count: 3
-        inbound_nat_pools:
-          - name: gitlab_ssh_rule
-            frontend_ip_configuration_name: "{{ rg }}_lb_pip"
+          - name: gitlab-ssh-ping
             protocol: Tcp
-            frontend_port_range_start: "{{ nomad_gitlab_ssh_port }}" 
-            frontend_port_range_end: "{{ nomad_gitlab_ssh_port +1 }}" 
-            backend_port: "{{ nomad_gitlab_ssh_port }}" 
+            port: "{{ nomad_gitlab_ssh_port }}"
+            interval: 5
+            fail_count: 3
         load_balancing_rules:
+          - name: gitlab_ssh_rule
+            frontend_ip_configuration: "{{ rg }}_lb_pip"
+            backend_address_pool: traefik-lb-backend-pool
+            frontend_port: "{{ nomad_gitlab_ssh_port }}"
+            backend_port: "{{ nomad_gitlab_ssh_port }}" 
+            protocol: Tcp
+            probe: gitlab-ssh-ping
           - name: http_port_lb_rule
             frontend_ip_configuration: "{{ rg }}_lb_pip"
             backend_address_pool: traefik-lb-backend-pool
@@ -111,18 +116,24 @@
         direction: Inbound
         destination_port_range: 8081
         priority: 101
+      - name: gitlab-ssh-rule
+        description: gitlab-ssh-ingress
+        access: Allow
+        direction: Inbound
+        destination_port_range: "{{ nomad_gitlab_ssh_port }}" 
+        priority: 102
       - name: http_services
         description: http
         access: Allow
         direction: Inbound
         destination_port_range: 80
-        priority: 102
+        priority: 103
       - name: https_services
         description: https
         access: Allow
         direction: Inbound
         destination_port_range: 443
-        priority: 103
+        priority: 104
   delegate_to: localhost
   tags:
     - create
