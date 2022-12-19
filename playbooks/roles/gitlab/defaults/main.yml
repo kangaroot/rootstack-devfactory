@@ -1,2 +1,43 @@
 nomad_gitlab_job_name: gitlab
 
+nomad_gitlab_group_count: 1
+
+# nomad_gitlab_volume: "{{ nomad_csi_volumes[0] }}"
+nomad_gitlab_volume_container_mount_point: "/srv/gitlab"
+
+nomad_gitlab_docker_image: "gitlab/gitlab-ce:{{ nomad_gitlab_docker_image_tag }}"
+nomad_gitlab_docker_image_tag: "15.6.0-ce.0"
+
+nomad_gitlab_shared_runner_token: ""
+nomad_gitlab_initial_root_password: ""
+
+nomad_gitlab_docker_configuration:
+  externalurl: "https://gitlab.{{ zone }}/"
+  listenport: 80
+  initial_root_password: "{{ nomad_gitlab_initial_root_password }}"
+  trusted_addresses: ['172.26.64.1/20', '{{ network_cidr }}' ]
+  real_ip_recursive: "on"
+  monitoring_whitelist: ['127.0.0.0/8', '{{ network_cidr }}' ]
+  shared_runner_registration_token: "{{ nomad_gitlab_shared_runner_token }}"
+
+nomad_gitlab_ssh_port: 2222
+
+nomad_gitlab_network:
+  - name: http
+    port: 80
+    hostnetwork: public
+  - name: ssh
+    port: "{{ nomad_gitlab_ssh_port }}"
+    hostnetwork: public
+
+nomad_gitlab_services:
+  - name: gitlab
+    port: "{{ nomad_gitlab_network[0].name }}"
+  - name: gitlab-ssh
+    port: "{{ nomad_gitlab_ssh_port }}"
+    
+nomad_gitlab_job_resources:
+  cpu: 2000
+  memory: 8000
+
+
