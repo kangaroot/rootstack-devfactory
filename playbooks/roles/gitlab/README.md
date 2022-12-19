@@ -1,7 +1,7 @@
 # Gitlab
 
 This role deploys a working Gitlab instance on the Nomad cluster. 
-Gitlab is intended to be the central tool used in Devfactory as all other tools 
+Gitlab is intended to be the central tool used in Devfactory as all other tools deployed on top of the Nomad cluster are tied into Gitlab.
 The role is configured to use the [Gitlab Omnibus](https://docs.gitlab.com/omnibus/) Docker image. This image packages into the image the different components necessary to run a single instance of Gitlab including an internal PostgreSQL instance.
 
 The installed Gitlab instance is designed to support a moderate level of failover by using an Azure disk as a CSI volume that will be persisted across restarts, node-failures etc.
