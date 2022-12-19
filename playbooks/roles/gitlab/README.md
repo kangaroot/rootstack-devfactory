@@ -12,8 +12,8 @@ This role uses a jinja2 template of a Nomad Job spec to deploy Gitlab to the nom
 
 It is configured to allow traefik to read the registered consul services for:
 
-- https
-- SSH
+- http (`gitlab`)
+- SSH (`gitlab-ssh`)
 
 SSH is setup by setting the `nomad_gitlab_ssh_port` variable(defaults to `2222`). An Azure load balancer rule is assigned to this port on the public ip of the load balancer. Traefik then listens on this port and forwards the tcp connection to the endpoint of the `gitlab-ssh` service that is registered in consul.  
 
