@@ -78,7 +78,6 @@ job "{{ nomad_gitlab_job_name }}" {
         volumes = [
           "{{ nomad_gitlab_volume_container_mount_point }}/data:/var/opt/gitlab",
           "{{ nomad_gitlab_volume_container_mount_point }}/config:/etc/gitlab",
-          #"local/gitlab.rb:/etc/gitlab/gitlab.rb",
           "local/sshd_config:/assets/sshd_config"
         ]
         {% if 'aarch64' != ansible_architecture %}
