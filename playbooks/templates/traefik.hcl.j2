@@ -131,6 +131,7 @@ entryPoint = "traefik"
 {% if job_fact.acme_challenge == 'dns' and azure %}
 [certificatesResolvers.{{ consul_dc_name }}.acme.dnsChallenge]
     provider = "azure"
+    disablePropagationCheck = true
 {% endif %}
 {% endif %}
 EOF
