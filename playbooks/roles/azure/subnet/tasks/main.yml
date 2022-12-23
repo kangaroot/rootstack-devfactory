@@ -18,6 +18,11 @@
           - 443
         direction: Inbound
         priority: 102
+      - name: gitlab_ssh
+        access: Allow
+        destination_port_range: "{{ nomad_gitlab_ssh_port }}"
+        direction: Inbound
+        priority: 103
   run_once: true
   tags:
     - create

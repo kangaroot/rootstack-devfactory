@@ -44,3 +44,7 @@
       tags:
         - grafana
       when: "'grafana' in group_names"
+    - role: gitlab
+      tags:
+        - gitlab
+      when: gitlab_enabled | bool

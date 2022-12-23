@@ -88,6 +88,10 @@ job "traefik" {
 level = "DEBUG"
 
 [entryPoints]
+   {% if gitlab_enabled is defined %} 
+    [entryPoints.ssh]
+    address = ":{{ nomad_gitlab_ssh_port }}"
+  {% endif %}
     [entryPoints.http]
     address = ":80"
     [entryPoints.traefik]

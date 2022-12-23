@@ -1,0 +1,146 @@
+job "{{ nomad_gitlab_job_name }}" {
+  datacenters = ["{{ nomad_datacenter }}"]
+  type = "service"
+
+  constraint {
+    attribute = "${attr.kernel.name}"
+    value     = "linux"
+  }
+
+  group "gitlab" {
+    count = "{{ nomad_gitlab_group_count }}"
+    volume "{{ nomad_gitlab_volume.name }}"{
+      type = "{{ nomad_gitlab_volume.type }}"
+      access_mode     = "{{ nomad_gitlab_volume.accessmode }}"
+      attachment_mode = "{{ nomad_gitlab_volume.attachmentmode }}"     
+      read_only = {{ nomad_gitlab_volume.read_only }}
+      source = "{{ nomad_gitlab_volume.id }}"
+    }
+    network {
+      mode = "bridge"
+      port "{{ nomad_gitlab_network[0].name }}" {
+        to = {{ nomad_gitlab_network[0].port }}
+        host_network = "{{ nomad_gitlab_network[0].hostnetwork }}"
+      }
+      port "{{ nomad_gitlab_network[1].name }}" {
+        static = {{ nomad_gitlab_network[1].port }}
+        host_network = "{{ nomad_gitlab_network[1].hostnetwork }}"
+      }
+    }
+
+    service {
+      name = "{{ nomad_gitlab_services[0].name }}"
+      port = "{{ nomad_gitlab_services[0].port }}"
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.gitlab.tls=true",
+        "traefik.http.routers.gitlab.entrypoints=https",
+        "traefik.http.routers.gitlab.tls.certResolver={{ consul_dc_name }}",
+        "traefik.http.routers.gitlab.tls.domains[0].main=gitlab.{{ zone }}",
+      ]
+      check {
+        type = "http"
+        path = "/-/health"
+        method = "GET"
+        interval = "10s"
+        timeout = "2s"
+        }
+      }
+    service {
+      name = "{{ nomad_gitlab_services[1].name }}"
+      port = "{{ nomad_gitlab_services[1].port }}"
+      tags = [
+        "traefik.enable=true",
+        "traefik.tcp.routers.gitlab-ssh.rule=HostSNI(`*`)",
+        "traefik.tcp.routers.gitlab-ssh.entrypoints=ssh",
+        "traefik.tcp.routers.gitlab-ssh.service={{ nomad_gitlab_services[1].name }}",
+        "traefik.tcp.services.gitlab-ssh.loadbalancer.server.port={{ nomad_gitlab_ssh_port }}",
+      ]
+      }
+
+    task "gitlab" {
+      driver = "docker"
+      resources {
+        cpu    = {{ nomad_gitlab_job_resources.cpu }} 
+        memory = {{ nomad_gitlab_job_resources.memory }}  
+      }
+      config {
+        image          = "{{ nomad_gitlab_docker_image }}"
+        ports          = ["{{ nomad_gitlab_network[0].name }}"]
+        mount {
+            type = "bind"
+            source = "local/gitlab.rb"
+            target = "/etc/gitlab/gitlab.rb"
+            bind_options = {
+                propagation = "rshared"
+              }
+          }
+        volumes = [
+          "{{ nomad_gitlab_volume_container_mount_point }}/data:/var/opt/gitlab",
+          "{{ nomad_gitlab_volume_container_mount_point }}/config:/etc/gitlab",
+          "local/sshd_config:/assets/sshd_config"
+        ]
+        {% if 'aarch64' != ansible_architecture %}
+        logging {
+          type = "loki"
+        }
+        {% endif %}
+      }
+
+      volume_mount {
+          volume = "{{ nomad_gitlab_volume.id }}"
+          destination = "{{ nomad_gitlab_volume_container_mount_point }}"
+          read_only = false
+      }
+
+      template {
+        data = <<EOH
+external_url '{{ nomad_gitlab_docker_configuration.externalurl }}'
+nginx['listen_https'] = false
+nginx['listen_port'] = {{ nomad_gitlab_docker_configuration.listenport }}
+nginx['real_ip_trusted_addresses'] = {{ nomad_gitlab_docker_configuration.trusted_addresses }}
+nginx['real_ip_header'] = 'X-Forwarded-For'
+nginx['real_ip_recursive'] = '{{ nomad_gitlab_docker_configuration.real_ip_recursive }}'
+gitlab_rails['gitlab_shell_ssh_port'] = {{ nomad_gitlab_ssh_port }}
+gitlab_rails['monitoring_whitelist'] = {{ nomad_gitlab_docker_configuration.monitoring_whitelist }} 
+gitlab_rails['initial_root_password'] = "{{ nomad_gitlab_docker_configuration.initial_root_password }}"
+gitlab_rails['initial_shared_runners_registration_token'] = "{{ nomad_gitlab_docker_configuration.shared_runner_registration_token }}"
+EOH
+       destination = "local/gitlab.rb" 
+     }
+     template {
+       data = <<EOH
+Port {{ nomad_gitlab_ssh_port }} 
+ChallengeResponseAuthentication no
+HostKey /etc/gitlab/ssh_host_rsa_key
+HostKey /etc/gitlab/ssh_host_ecdsa_key
+HostKey /etc/gitlab/ssh_host_ed25519_key
+Protocol 2
+PermitRootLogin no
+PasswordAuthentication no
+MaxStartups 100:30:200
+AllowUsers git
+PrintMotd no
+PrintLastLog no
+PubkeyAuthentication yes
+AuthorizedKeysFile %h/.ssh/authorized_keys /gitlab-data/ssh/authorized_keys
+AuthorizedKeysCommand /opt/gitlab/embedded/service/gitlab-shell/bin/gitlab-shell-authorized-keys-check git %u %k
+AuthorizedKeysCommandUser git
+
+# With "UsePAM yes" the "!" is seen as a password disabled account and not fully locked so ssh public key login works
+# Please make sure that the account is created without passwordlogin ("*" in /etc/shadow) or configure pam. 
+# Issue #5891 https://gitlab.com/gitlab-org/omnibus-gitlab
+UsePAM no
+
+# Disabling use DNS in ssh since it tends to slow connecting
+UseDNS no
+
+# Enable the use of Git protocol v2
+AcceptEnv GIT_PROTOCOL
+EOH
+        destination = "local/sshd_config"
+       }
+    }
+  }
+}
+
