@@ -1,2 +1,2 @@
 ---
-consul_dc_name: ewan
+consul_dc_name: # example: sejo

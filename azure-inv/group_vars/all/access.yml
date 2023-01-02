@@ -2,7 +2,6 @@
 # my working example, change name, key, full, shell, password_hash and uncomment groups
 access_admin_users:
   - name: ewan 
-    # key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJMnq1UL0GsMFPHPr3D5GY81YUVM5c3YX64jhbW4Y6BS openpgp:0xDB92184E Only RSA keys work apprently 
     key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCVtdWcN2He3w+9HXgCpSfP+sRaDbSZkexCxq1FkjUOdI0EbcMhcR5jjmbFeW0tQ9UFBcNp1g5LovISfyjq2CFDuXrnIwVTzYEtUQt1UKPhsUWw/xYolxWxhwyOj0GhbBn6mZmrCEgfofQaX49BZln6Tj70U441+UAvwQkdPvBnK3SA6ApbyMMK+WWcgqUbU1fagWptAGzfSQEs87Z6Z1If1eayroMFxplh63vPYA9c7h481tNg/TJSRJ1Au762BgmL/QpDFjzJw1Je5kHkLCD51yRDEaTXEJl3VYKag7XZ2ebcnyfgPCgxjrUpZKZA74kUmd8GwxH6cZwvBYy2FJ/+KjJKIsNciZSXV3LEq5YC07uaiV5IiFsfl3MpYqC8QlFFIcmFrZu5ZMEYj7rcJ09891iuROq60+6MjoKuqbqlsI/UQUVXl8DRaKSPHIsmrr/c/qrFcpZQumjBi9Uw0pSj8S794vKtpWfuLKiIOj9tfHVYGmhKDa9bM1ZrtowzbwTsiIK5bI58a7O0+TpKcBG+fu4XaC1nd/vUZsN4O8W8qp+g4qtMU7wSi3c8QNlixn4BcSHutPeJ35c2BhqpTViwHVexhiPITt+RTFY2wXh5kZf7bfcq9JtuV1fXpvLsWBDXnLLo5OVHa0cILoS9+nEX676xpu29a1uDY2veqNnRJQ== ewan@lenovoewan-2022-11-16
     full: Ewan Gilchrist 
     shell: /bin/bash
