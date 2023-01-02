@@ -1,3 +1,26 @@
 ---
-nomad_datacenter: # example sejoplex
-network_cidr: # example 10.42.0.0/24
+nomad_datacenter: ewandc1
+network_cidr: 10.42.0.0/24
+
+# CSI Volume config
+nomad_csi_volumes:
+  - name: gitlab 
+    id: gitlab
+    minsize: 10737418240 
+    maxsize: 32212254720
+    namespace: default
+    type: csi 
+    filesystem: ext4
+    accessmode: single-node-writer
+    attachmentmode: file-system
+    # Variables just for nomad job
+    read_only: "false"
+
+nomad_csi_plugin_id: azuredisk-csi
+
+# nomad_csi_plugin_node_id: "{% raw %}${attr.unique.hostname}-csi-node{% endraw %}"
+
+nomad_csi_plugin_job_name: "plugin-{{ item }}"
+
+nomad_csi_plugin_image: "mcr.microsoft.com/k8s/csi/azuredisk-csi"
+nomad_csi_plugin_image_tag: "v1.24.0"

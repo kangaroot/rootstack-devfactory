@@ -1,5 +1,6 @@
 ---
 # generate a random key (uuid4 for example)
-s3_access_key:
+s3_access_key: "{{ lookup('env', 'MINIO_ROOT_USER' ) }}"
 # generate a long and secure key
-s3_secret_key:
+s3_secret_key: "{{ lookup('env', 'MINIO_ROOT_PASSWORD' ) }}"
+

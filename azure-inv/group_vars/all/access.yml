@@ -1,15 +1,15 @@
 ---
 # my working example, change name, key, full, shell, password_hash and uncomment groups
 access_admin_users:
-  #- name: sejo
-  #  key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCrI5YzM/SlQpf1HJBwJNl2kEj0wLFuyu8gdSHOiG9Z2I4GD1uoUr9ObNYxZ76xl/2iNrcpTUWlq0c6HXn4q0Tx8gS+5hancU1/3PasEJnVIOyS3F53DEMxtHGGiN5ynQtUmhxqlfwrDsYGOor4jVPDIrj0K9qij4qSmnPZv5xaOQo3GTTeum/Yf60xqj5oXsEypOemRyFYZvTxENmNNytgexUJcEqc8BYUqP1U6H1DH6SYgrwmLR3aaNN7t0BsNhjuQpFUKSRpmGBIjkz3iuowSvnu79raIAxuun/pi55aoaOPhhSKvA543/tBasUwq+21KftSX5DxGv4w8bh6L0o5IAJEVLbG+cc82GJSsb1VNBLy/wyvl9g+jzdlMSQKle7gKk51zYTqpwb043TnwcLydOcARo8xb7sVje7S3ROTkBikLIdsBss+XZo/JGa7fHDjKViuP6By6BDQCXkuHa4AxWmxvwUQczcavAxczeH/2ezqNEFgyMzxYlAdKBpCnA0= sejo@octomore
-  #  full: Jochen Maes
-  #  shell: /bin/bash
-  #  groups:
-  #    - admin
-  #    - wheel
-  # test
-  #  password_hash: $6$72PSUsnNIRFFRjyp$slv0TRe/ROcEGfv/69JNiITPfJGszFdULXToohmvvUzNavI2i7hQH.uq2dbY/ZxGDEx/cyy452tpN0Uvt3Yjy0
+  - name: ewan 
+    # key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJMnq1UL0GsMFPHPr3D5GY81YUVM5c3YX64jhbW4Y6BS openpgp:0xDB92184E Only RSA keys work apprently 
+    key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCVtdWcN2He3w+9HXgCpSfP+sRaDbSZkexCxq1FkjUOdI0EbcMhcR5jjmbFeW0tQ9UFBcNp1g5LovISfyjq2CFDuXrnIwVTzYEtUQt1UKPhsUWw/xYolxWxhwyOj0GhbBn6mZmrCEgfofQaX49BZln6Tj70U441+UAvwQkdPvBnK3SA6ApbyMMK+WWcgqUbU1fagWptAGzfSQEs87Z6Z1If1eayroMFxplh63vPYA9c7h481tNg/TJSRJ1Au762BgmL/QpDFjzJw1Je5kHkLCD51yRDEaTXEJl3VYKag7XZ2ebcnyfgPCgxjrUpZKZA74kUmd8GwxH6cZwvBYy2FJ/+KjJKIsNciZSXV3LEq5YC07uaiV5IiFsfl3MpYqC8QlFFIcmFrZu5ZMEYj7rcJ09891iuROq60+6MjoKuqbqlsI/UQUVXl8DRaKSPHIsmrr/c/qrFcpZQumjBi9Uw0pSj8S794vKtpWfuLKiIOj9tfHVYGmhKDa9bM1ZrtowzbwTsiIK5bI58a7O0+TpKcBG+fu4XaC1nd/vUZsN4O8W8qp+g4qtMU7wSi3c8QNlixn4BcSHutPeJ35c2BhqpTViwHVexhiPITt+RTFY2wXh5kZf7bfcq9JtuV1fXpvLsWBDXnLLo5OVHa0cILoS9+nEX676xpu29a1uDY2veqNnRJQ== ewan@lenovoewan-2022-11-16
+    full: Ewan Gilchrist 
+    shell: /bin/bash
+    groups:
+      - admin
+      - wheel
+    password_hash: "{{ lookup('env', 'ADMIN_PASSWORD') | password_hash('sha512', lookup('env', 'ADMIN_PASSWORD_SALT') ) }}"
 access_users:
   # add application users here as well
   - name: consul

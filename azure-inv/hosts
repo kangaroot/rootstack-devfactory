@@ -1,21 +1,21 @@
 [bastion]
-bastion.example.net
+bastion.example.com
 
 [admin]
-cl0.example.net
-cl1.example.net
-cl2.example.net
+cl0.example.com
+cl1.example.com
+cl2.example.com
 
 [admin:vars]
-ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion.example.net"'
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion.example.com"'
 
 [client]
-cl3.example.net
-cl4.example.net
-cl5.example.net
+cl3.example.com
+cl4.example.com
+cl5.example.com
 
 [client:vars]
-ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion.example.net"'
+ansible_ssh_common_args='-o ProxyCommand="ssh -W %h:%p -q bastion.example.com"'
 
 # hashi runtime groups
 [vault_server:children]
@@ -38,25 +38,25 @@ admin
 
 # observability groups
 [minio]
-cl0.example.net
+cl0.example.com
 
 [minio_client:children]
 admin
 client
 
 [loki]
-cl0.example.net
-cl1.example.net
-cl2.example.net
+cl0.example.com
+cl1.example.com
+cl2.example.com
 
 [loki_server]
-cl2.example.net
+cl2.example.com
 
 [grafana]
-cl1.example.net
+cl1.example.com
 
 [prometheus]
-cl2.example.net
+cl2.example.com
 
 [postgresql]
-cl0.example.net
+cl0.example.com

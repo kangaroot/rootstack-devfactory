@@ -1,6 +1,6 @@
 ---
 nomad_job_traefik:
-  certificate_email: #example jmaes@kangaroot.net
+  certificate_email: egilchrist@kangaroot.net
   acme_challenge: dns
   volumes:
     - dir: /data/traefik

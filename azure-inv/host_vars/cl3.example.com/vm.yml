@@ -1,11 +1,11 @@
 ---
 vm_name: cl3
-vm_size: Standard_DS1_v2
-admin_username: sejo
+vm_size: Standard_B2ms 
+admin_username: ewan
 vm_image:
   offer: 0001-com-ubuntu-server-focal
   publisher: Canonical
   sku: 20_04-lts
   version: latest
-vm_subnet_name: jochen-subnet-vm
+vm_subnet_name: ewan-subnet-vm
 vm_ip: 10.42.0.13

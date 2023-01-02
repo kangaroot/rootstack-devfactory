@@ -1,0 +1,8 @@
+gitlab_enabled: true
+nomad_gitlab_job_name: gitlab
+nomad_gitlab_docker_image: gitlab/gitlab-ce:{{ nomad_gitlab_docker_image_tag }}
+nomad_gitlab_docker_image_tag: "15.6.0-ce.0"
+nomad_gitlab_shared_runner_token: "{{ lookup('env', 'GITLAB_RUNNER_REGISTRATION_TOKEN') }}"
+nomad_gitlab_initial_root_password: "{{ lookup('env', 'GITLAB_INITIAL_ROOT_PASSWORD') }}"
+nomad_gitlab_ssh_port: 2222
+nomad_gitlab_volume: "{{ nomad_csi_volumes[0] }}"
