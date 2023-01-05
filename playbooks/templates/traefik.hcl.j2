@@ -125,7 +125,7 @@ entryPoint = "traefik"
       email =  "{{ job_fact.certificate_email }}"
       storage = "/config/{{ nomad_datacenter }}.json"
       # comment for production
-      caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+      #caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
 {% endif %}
 {% if job_fact.acme_challenge is defined %}
 {% if job_fact.acme_challenge == 'dns' and azure %}
