@@ -31,7 +31,7 @@ job "{{ nomad_gitlab_runner_job_name }}" {
     task "gitlab-runner-register" {
       driver = "docker"
         config {
-            image = "gitlab/gitlab-runner:v15.6.1"
+            image = "{{ nomad_gitlab_runner_docker_image }}"
             command = "register"
             args = [ 
               "--non-interactive",
