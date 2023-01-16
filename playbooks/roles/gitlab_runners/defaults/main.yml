@@ -6,6 +6,8 @@ nomad_gitlab_runner_job_resources:
 nomad_gitlab_runner_docker_image: "gitlab/gitlab-runner:{{ nomad_gitlab_runner_docker_image_tag }}"
 nomad_gitlab_runner_docker_image_tag: "v15.6.1"
 nomad_gitlab_runner_docker_network_mode: "host"
+
+# Changing from /alloc might cause breakages 
 nomad_gitlab_runner_shared_config_file_path: "/alloc/config.toml"
 nomad_gitlab_runner_container_ci_docker_image: "docker:20.10.16"
 
