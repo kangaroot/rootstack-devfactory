@@ -50,5 +50,9 @@
       when: gitlab_enabled | bool
     - role: gitlab_runners
       tags:
-        - gitlab_runners
+        - gitlab-runner
       when: gitlab_runners_enabled | bool
+    - role: mattermost
+      tags:
+        - mattermost
+      when: mattermost_enabled | bool
