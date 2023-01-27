@@ -48,3 +48,7 @@
       tags:
         - gitlab
       when: gitlab_enabled | bool
+    - role: mattermost
+      tags:
+        - mattermost
+      when: mattermost_enabled | bool
