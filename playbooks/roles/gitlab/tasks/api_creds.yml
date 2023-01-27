@@ -1,0 +1,13 @@
+
+- name: Request api token from Gitlab
+  ansible.builtin.uri:
+    url: "https://gitlab.{{ zone }}/oauth/token"
+    method: POST
+    body: "grant_type=password&username=root&password={{ nomad_gitlab_initial_root_password }}&scope=sudo api"
+    remote_src: yes
+    validate_certs: no
+  register: gitlab_api_token_gen
+
+- name: Set gitlab api token
+  ansible.builtin.set_fact:
+    gitlab_api_token: "{{ gitlab_api_token_gen | json_query('json.access_token') }}"

@@ -40,4 +40,6 @@ nomad_gitlab_job_resources:
   cpu: 2000
   memory: 8000
 
+nomad_gitlab_api_applications_endpoint: "api/v4/applications"
+
 
