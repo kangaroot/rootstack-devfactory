@@ -1,3 +1,5 @@
+gitlab_enabled: false
+
 nomad_gitlab_job_name: gitlab
 
 nomad_gitlab_group_count: 1
