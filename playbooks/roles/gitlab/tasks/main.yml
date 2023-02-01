@@ -2,12 +2,27 @@
   ansible.builtin.include_tasks: "setup.yml"
   run_once: true
 
-- name: Create API creds
-  ansible.builtin.include_tasks: "api_creds.yml"
-  run_once: true
-
-- name: Create OAuth applications in Gitlab
-  ansible.builtin.include_tasks: "create_oauth_apps.yml"
-  loop: "{{ nomad_gitlab_oauth_applications }}"
-  when: nomad_gitlab_oauth_applications is defined
-  run_once: true
+- block:
+  - name: Wait until Gitlab is ready
+    ansible.builtin.uri:
+      url: "http://consul.service.consul:8500/v1/health/checks/{{ nomad_gitlab_services[0].name }}"
+      method: GET
+      remote_src: yes
+    async: 600
+    poll: 5
+    register: gitlab_status
+    until: gitlab_status | json_query('json[0].Status') == 'passing'
+    retries: 20
+    delay: 5
+    run_once: true
+  
+  - name: Create API creds
+    ansible.builtin.include_tasks: "api_creds.yml"
+    run_once: true
+  
+  - name: Create OAuth applications in Gitlab
+    ansible.builtin.include_tasks: "create_oauth_apps.yml"
+    loop: "{{ nomad_gitlab_oauth_applications }}"
+    when: nomad_gitlab_oauth_applications is defined
+    run_once: true
+  when: nomad_mattermost_gitlab_sso is defined 
