@@ -86,7 +86,7 @@ nomad_mattermost_gitab_sso: true
 
 **Postgres**
 
-Generate a long password (something like `pwgen -s 64 1`) and add it to `inventory/group_vars/all/mattermost.yml`:
+Generate a long password (something like `pwgen -s 64 1`) and add it to `inventory/group_vars/all/mattermost.yml`.
 Store this password securely. Using Ansible vault for example. 
 You can also use something [direnv](https://direnv.net/) to assign it to an environment variable and then reference in the playbook like this:  
 
