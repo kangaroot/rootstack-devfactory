@@ -89,7 +89,7 @@ job "{{ nomad_mattermost_job_name }}" {
           MM_GITLABSETTINGS_ENABLE = "true"
           MM_GITLABSETTINGS_ID = "{{ mattermost_oauth_creds.application_id }}"
           MM_GITLABSETTINGS_SECRET = "{{ mattermost_oauth_creds.application_secret }}"
-          MM_GITLABSETTINGS_USERAPIENDPOINT = "https://gitlab.{{ zone }}/api/v3/user"
+          MM_GITLABSETTINGS_USERAPIENDPOINT = "https://gitlab.{{ zone }}/api/v4/user"
           MM_GITLABSETTINGS_AUTHENDPOINT = "https://gitlab.{{ zone }}/oauth/authorize"
           MM_GITLABSETTINGS_TOKENENDPOINT = "https://gitlab.{{ zone }}/oauth/token"
           {% endif %}
