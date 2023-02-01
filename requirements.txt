@@ -1,4 +1,4 @@
-ansible==5.5.0
+ansible==7.0.0
 ansible-compat==2.0.2
 ansible-core==2.12.4
 arrow==1.2.2
