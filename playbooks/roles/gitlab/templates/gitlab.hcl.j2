@@ -1,5 +1,6 @@
 job "{{ nomad_gitlab_job_name }}" {
   datacenters = ["{{ nomad_datacenter }}"]
+  namespace = "{{ nomad_namespaces[1] }}"
   type = "service"
 
   constraint {
