@@ -121,6 +121,7 @@ provisioner:
       all:
         zone: test.sejo-it.be
         consul_dc_name: sejo
+        gitlab_enabled: false
         access_admin_users:
           - name: sejo
             key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBDFKJQVfenACYXmanW9k9+EC2pb8b/AGlrjw1BsheIp jochen@sejo-it.be
