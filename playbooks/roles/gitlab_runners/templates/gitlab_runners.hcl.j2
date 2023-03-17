@@ -1,0 +1,67 @@
+job "{{ nomad_gitlab_runner_job_name }}" {
+  datacenters = ["{{ nomad_datacenter }}"]
+  type = "service"
+
+  constraint {
+    attribute = "${attr.kernel.name}"
+    value     = "linux"
+  }
+
+  group "gitlab-runner" {
+    count = {{ nomad_gitlab_runner_group_count }} 
+    task "gitlab-runner" {
+      driver = "docker"
+      resources {
+          cpu = {{ nomad_gitlab_runner_job_resources.cpu }}
+          memory = {{ nomad_gitlab_runner_job_resources.memory }} 
+        }
+        config {
+            image = "{{ nomad_gitlab_runner_docker_image }}"
+            command = "run"
+            args = ["--config", "{{ nomad_gitlab_runner_shared_config_file_path }}"]
+            network_mode = "host"
+            volumes = [
+              "/var/run/docker.sock:/var/run/docker.sock"
+            ]
+            logging {
+                type = "loki"
+            }
+        }
+    }
+    task "gitlab-runner-register" {
+      driver = "docker"
+        config {
+            image = "{{ nomad_gitlab_runner_docker_image }}"
+            command = "register"
+            args = [ 
+              "--non-interactive",
+              "--config",
+              "{{ nomad_gitlab_runner_shared_config_file_path }}",
+              "--executor",
+              "docker",
+              "--docker-image",
+              "{{ nomad_gitlab_runner_container_ci_docker_image }}",
+              "--docker-volumes", 
+              "/var/run/docker.sock:/var/run/docker.sock",
+              "--url",
+              "https://gitlab.{{ zone }}",
+              "--registration-token",
+              "{{ nomad_gitlab_shared_runner_token }}",
+              "--description", 
+              "docker-runner-${env["NOMAD_SHORT_ALLOC_ID"]}",
+              "--tag-list",
+              "docker",
+              "--run-untagged=true",
+              "--locked=false",
+              "--access-level=not_protected"
+            ]
+            network_mode = "host"
+          }
+          lifecycle {
+            hook = "prestart"
+            sidecar = false
+          }
+      }
+  }
+}
+  

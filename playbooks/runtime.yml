@@ -48,3 +48,7 @@
       tags:
         - gitlab
       when: gitlab_enabled | bool
+    - role: gitlab_runners
+      tags:
+        - gitlab_runners
+      when: gitlab_runners_enabled | bool

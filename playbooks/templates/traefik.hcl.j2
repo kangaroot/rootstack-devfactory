@@ -8,7 +8,7 @@ job "traefik" {
             value = "1"
             weight = 100
         }
-        count = 3
+        count = 1
 
         network {
             port "http" {
@@ -125,7 +125,9 @@ entryPoint = "traefik"
       email =  "{{ job_fact.certificate_email }}"
       storage = "/config/{{ nomad_datacenter }}.json"
       # comment for production
+      {% if gitlab_runners_enabled is false %}
       caServer = "https://acme-staging-v02.api.letsencrypt.org/directory"
+      {% endif %}
 {% endif %}
 {% if job_fact.acme_challenge is defined %}
 {% if job_fact.acme_challenge == 'dns' and azure %}
