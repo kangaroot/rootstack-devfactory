@@ -1,4 +1,7 @@
 ---
+# while creating the vbox image you might run into an issue that it cannot find the box file when on virtualbox7.
+# Please follow this https://forums.rockylinux.org/t/vagrant-box-rockylinux-8-fails-for-virtualbox-provider-with-error-vbox-e-object-not-found/8228/4 to fix that.
+
 dependency:
   name: galaxy
 driver:
@@ -10,6 +13,7 @@ platforms:
     box: rockylinux/8
     memory: 1024
     provider_raw_config_args:
+      - "customize ['modifyvm', :id, '--firmware', 'efi' ]"
       - "customize ['createhd', '--filename', 'minioDisk.vdi', '--size', '5120']"
       - "customize ['storageattach', :id,  '--storagectl',  'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', 'minioDisk.vdi']"
     interfaces:
@@ -29,6 +33,7 @@ platforms:
     box: rockylinux/8
     memory: 1024
     provider_raw_config_args:
+      - "customize ['modifyvm', :id, '--firmware', 'efi' ]"
       - "customize ['createhd', '--filename', 'psqlDisk.vdi', '--size', '5120']"
       - "customize ['storageattach', :id,  '--storagectl',  'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', 'psqlDisk.vdi']"
     interfaces:
@@ -47,6 +52,8 @@ platforms:
   - name: cluster3.test.sejo-it.be
     box: rockylinux/8
     memory: 1024
+    provider_raw_config_args:
+      - "customize ['modifyvm', :id, '--firmware', 'efi' ]"
     interfaces:
       - network_name: private_network
         type: static
@@ -62,6 +69,8 @@ platforms:
   - name: cluster4.test.sejo-it.be
     box: rockylinux/8
     memory: 1024
+    provider_raw_config_args:
+      - "customize ['modifyvm', :id, '--firmware', 'efi' ]"
     interfaces:
       - network_name: private_network
         type: static
@@ -74,6 +83,8 @@ platforms:
       - minio_client
   - name: cluster5.test.sejo-it.be
     box: rockylinux/8
+    provider_raw_config_args:
+      - "customize ['modifyvm', :id, '--firmware', 'efi' ]"
     memory: 1024
     interfaces:
       - network_name: private_network
@@ -121,6 +132,7 @@ provisioner:
       all:
         zone: test.sejo-it.be
         consul_dc_name: sejo
+        gitlab_enabled: false
         access_admin_users:
           - name: sejo
             key: ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBDFKJQVfenACYXmanW9k9+EC2pb8b/AGlrjw1BsheIp jochen@sejo-it.be
