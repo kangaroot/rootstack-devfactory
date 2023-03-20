@@ -23,9 +23,11 @@ job "{{ nomad_gitlab_runner_job_name }}" {
             volumes = [
               "/var/run/docker.sock:/var/run/docker.sock"
             ]
+            {% if 'aarch64' != ansible_architecture %}
             logging {
-                type = "loki"
+              type = "loki"
             }
+            {% endif %}
         }
     }
     task "gitlab-runner-register" {
