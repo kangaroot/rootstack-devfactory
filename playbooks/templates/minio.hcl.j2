@@ -1,6 +1,6 @@
 job "minio" {
   datacenters = ["{{ nomad_datacenter }}"]
-  namespace = "{{ nomad_namespaces[0] }}"
+  namespace = "{{ nomad_namespaces.admin.name }}"
   type = "service"
 
   group "{{ job_name }}" {

@@ -1,6 +1,6 @@
 job "prometheus" {
     datacenters = ["{{ nomad_datacenter }}"]
-    namespace = "{{ nomad_namespaces[0] }}"
+    namespace = "{{ nomad_namespaces.admin.name }}"
     type = "service"
     group "prometheus" {
         count = 1
