@@ -39,6 +39,10 @@ job "{{ nomad_gitlab_runner_job_name }}" {
               "--non-interactive",
               "--config",
               "{{ nomad_gitlab_runner_shared_config_file_path }}",
+              {%- if nomad_letsencrypt_staging is true -%}
+              --tls-ca-file,
+              '{{ nomad_gitlab_runner_letsencrypt_staging_cert_path }}',
+              {%- endif -%}
               "--executor",
               "docker",
               "--docker-image",
@@ -59,6 +63,14 @@ job "{{ nomad_gitlab_runner_job_name }}" {
             ]
             network_mode = "host"
           }
+          {%- if nomad_letsencrypt_staging is true -%}
+          template {
+              data = <<EOH
+              {{ nomad_gitlab_letsencrypt_staging_cert_pem }}
+              EOH
+              destination = {{ nomad_gitlab_runner_letsencrypt_staging_cert_path }}
+          }
+          {%- endif -%}
           lifecycle {
             hook = "prestart"
             sidecar = false

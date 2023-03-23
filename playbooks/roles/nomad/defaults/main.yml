@@ -1,4 +1,7 @@
 ---
+nomad_deployment_environment: dev
+nomad_letsencrypt_staging: "{{ true if nomad_deployment_environment == 'dev' }}" 
+
 nomad_version: 1.2.2
 nomad_etc_dir: /etc/nomad.d
 nomad_data_dir: /opt/nomad

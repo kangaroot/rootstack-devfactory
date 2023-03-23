@@ -22,6 +22,12 @@
     delay: 5
     run_once: true
 
+  - name: Download Gitlab cert using OpenSSL
+    shell: 
+      cmd: "openssl s_client -connect gitlab.{{ zone }}:443 2>/dev/null | openssl x509 -outform pem"
+    register: nomad_gitlab_letsencrypt_staging_cert_pem
+    when: nomad_letsencrypt_staging | bool
+
   - name: spawn nomad job {{ nomad_gitlab_runner_job_name }}
     community.general.nomad_job:
       host: "nomad.service.consul"
