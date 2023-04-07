@@ -60,3 +60,6 @@ cl2.example.net
 
 [postgresql]
 cl0.example.net
+
+[vaultwarden]
+cl0.example.net
