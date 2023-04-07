@@ -1,0 +1,135 @@
+job "{{ nomad_mattermost_job_name }}" {
+  datacenters = ["{{ nomad_datacenter }}"]
+  type = "service"
+
+  constraint {
+    attribute = "${attr.kernel.name}"
+    value     = "linux"
+  }
+
+  group "mattermost" {
+    count = "{{ nomad_mattermost_group_count }}"
+
+    volume "{{ nomad_mattermost_volume_mounts[0].name }}"{
+      type = "{{ nomad_mattermost_volume.type }}"
+      access_mode     = "{{ nomad_mattermost_volume.accessmode }}"
+      attachment_mode = "{{ nomad_mattermost_volume.attachmentmode }}"     
+      read_only = {{ nomad_mattermost_volume.read_only }}
+      source = "{{ nomad_mattermost_volume.id }}"
+    }
+    volume "{{ nomad_mattermost_volume_mounts[1].name }}"{
+      type = "{{ nomad_mattermost_volume.type }}"
+      access_mode     = "{{ nomad_mattermost_volume.accessmode }}"
+      attachment_mode = "{{ nomad_mattermost_volume.attachmentmode }}"     
+      read_only = {{ nomad_mattermost_volume.read_only }}
+      source = "{{ nomad_mattermost_volume.id }}"
+    }
+    network {
+      mode = "bridge"
+      port "{{ nomad_mattermost_network[0].name }}" {
+        host_network = "{{ nomad_mattermost_network[0].hostnetwork }}"
+      }
+    }
+
+    service {
+      name = "{{ nomad_mattermost_services[0].name }}"
+      port = "{{ nomad_mattermost_network[0].name }}" 
+      tags = [
+        "traefik.enable=true",
+        "traefik.http.routers.mattermost.tls=true",
+        "traefik.http.routers.mattermost.entrypoints=https",
+        "traefik.http.routers.mattermost.tls.certResolver={{ consul_dc_name }}",
+        "traefik.http.routers.mattermost.tls.domains[0].main=mattermost.{{ zone }}",
+      ]
+      }
+
+    task "mattermost_app_data_dir_ownership" {
+      driver = "docker"
+      volume_mount {
+        volume = "{{ nomad_mattermost_volume_mounts[0].name }}"
+        destination = "{{ nomad_mattermost_volume_mounts[0].mountpoint }}"
+        read_only = false
+      }
+      config {
+        image        = "{{ nomad_mattermost_app_pre_task_docker_image }}"
+        command      = "sh"
+        args         = ["-c", "chown -R 2000:2000 {{ nomad_mattermost_volume_mounts[0].mountpoint }}"]
+      }
+      resources {
+        cpu    = 200
+        memory = 128
+      }
+
+      lifecycle {
+        hook    = "prestart"
+        sidecar = false
+      }
+    }
+
+    task "mattermost_app" {
+      driver = "docker"
+      volume_mount {
+          volume = "{{ nomad_mattermost_volume_mounts[0].name }}"
+          destination = "{{ nomad_mattermost_volume_mounts[0].mountpoint }}"
+          read_only = false
+      }
+      resources {
+        cpu    = {{ nomad_mattermost_app_resources.cpu }} 
+        memory = {{ nomad_mattermost_app_resources.memory }}  
+      }
+
+      env {
+          MM_SERVICESETTINGS_SITEURL = "{{ nomad_mattermost_externalurl }}"
+          MM_SERVICESETTINGS_FORWARD80TO443 = "false"
+          MM_SERVICESETTINGS_USELETSENCRYPT = "false"
+          MM_SQLSETTINGS_DRIVERNAME = "{{ nomad_mattermost_database_type }}"
+          MM_SQLSETTINGS_DATASOURCE = "{{ nomad_mattermost_database_connection_string }}"
+          MM_SERVICESETTINGS_LISTENADDRESS = ":${NOMAD_PORT_http}"
+          {% if nomad_mattermost_gitlab_sso is true %}
+          MM_GITLABSETTINGS_ENABLE = "true"
+          MM_GITLABSETTINGS_ID = "{{ mattermost_oauth_creds.application_id }}"
+          MM_GITLABSETTINGS_SECRET = "{{ mattermost_oauth_creds.application_secret }}"
+          MM_GITLABSETTINGS_USERAPIENDPOINT = "https://gitlab.{{ zone }}/api/v4/user"
+          MM_GITLABSETTINGS_AUTHENDPOINT = "https://gitlab.{{ zone }}/oauth/authorize"
+          MM_GITLABSETTINGS_TOKENENDPOINT = "https://gitlab.{{ zone }}/oauth/token"
+          {% endif %}
+      }
+      config {
+        image          = "{{ nomad_mattermost_app_docker_image }}"
+        ports          = ["{{ nomad_mattermost_network[0].name }}"]
+        {% if 'aarch64' != ansible_architecture %}
+        logging {
+          type = "loki"
+        }
+        {% endif %}
+      }
+
+    }
+
+    task "mattermost_db" {
+      driver = "docker"
+      env {
+        POSTGRES_USER = "{{ nomad_mattermost_database_user }}"
+        POSTGRES_PASSWORD = "{{ nomad_mattermost_database_password}}"
+        POSTGRES_DB = "{{ nomad_mattermost_database_name }}"
+        PGDATA = "{{ nomad_mattermost_volume_mounts[1].mountpoint }}/pgdata"
+      }
+      config {
+        image          = "{{ nomad_mattermost_db_docker_image }}"
+        {% if 'aarch64' != ansible_architecture %}
+        logging {
+          type = "loki"
+        }
+        {% endif %}
+      }
+
+      volume_mount {
+          volume = "{{ nomad_mattermost_volume_mounts[1].name }}"
+          destination = "{{ nomad_mattermost_volume_mounts[1].mountpoint }}"
+          read_only = false
+      }
+    }
+  }
+}
+
+

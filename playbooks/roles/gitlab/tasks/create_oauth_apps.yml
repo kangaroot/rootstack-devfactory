@@ -1,0 +1,17 @@
+- name: Create Application for OAuth
+  ansible.builtin.uri:
+    url: "https://gitlab.{{ zone }}/{{ nomad_gitlab_api_applications_endpoint }}"
+    method: POST
+    body: "name={{ item.name }}&redirect_uri={{ item.redirect_uris }}&scopes={{ item.scopes }}"
+    status_code: 201
+    headers: 
+      Authorization: "Bearer {{ gitlab_api_token }}" 
+    # remote_src: yes
+    validate_certs: no
+  register: created_application
+      
+- name: Set varible with OAuth application creds 
+  ansible.builtin.set_fact:
+    "{{ created_application | json_query('json.application_name' ) }}_oauth_creds":
+      application_id: "{{ created_application | json_query('json.application_id') }}"
+      application_secret: "{{ created_application | json_query('json.secret') }}"
