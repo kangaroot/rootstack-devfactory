@@ -1,0 +1,6 @@
+- hosts: vaultwarden
+  roles:
+    - role: vaultwarden
+      vars:
+        job_name: vaultwarden
+    - role: vaultwarden_client

@@ -1,0 +1,69 @@
+job "vaultwarden" {
+  datacenters = ["{{ nomad_datacenter }}"]
+  type = "service"
+
+  group "{{ job_name }}" {
+    count = 1
+    network {
+      mode = "bridge"
+      port "vaultwarden" {
+        static =  8088
+        host_network = "public"
+      }
+    }
+    task "{{job_name}}" {
+    {% if job_fact.affinity_value is defined %}
+      constraint {
+        attribute = "${node.unique.name}"
+        operator = "{{ job_fact['affinity_operator'] if 'affinity_operator' in job_fact else '=' }}"
+        value = "{{ job_fact['affinity_value'] }}"
+      }
+    {% endif %}
+      driver = "docker"
+      config {
+        image = "vaultwarden/server:1.26.0"
+        ports = ["vaultwarden"]
+        volumes = [
+        {% for dirs in job_fact.volumes %}
+          "{{ dirs.dir }}:{{ dirs.container_dir }}",
+        {% endfor %}
+        ]
+        {% if 'aarch64' != ansible_architecture %}
+         logging {
+          type = "loki"
+        }
+        {% endif %}
+      }
+      env {
+        ROCKET_PORT=8088
+        SIGNUPS_ALLOWED=false
+        SIGNUPS_DOMAINS_WHITELIST="{{ zone }}"
+        SIGNUPS_VERIFY=true
+      }
+    }
+    service {
+      name = "vaultwarden"
+      port = "vaultwarden"
+      tags = [
+        "vaultwarden", "client",
+        "traefik.enable=true",
+        "traefik.http.routers.{{ job_name}}.entryPoints=http,https",
+        "traefik.http.routers.{{ job_name }}.rule=Host(`vaultwarden.{{ zone }}`)",
+        "traefik.http.routers.{{ job_name }}.tls=true"
+        ]
+      check {
+        type = "http"
+        path = "/alive"
+        port = "vaultwarden"
+        interval = "10s"
+        timeout = "2s"
+      }
+    }
+    restart {
+      attempts = 10
+      interval = "5m"
+      delay = "30s"
+      mode = "delay"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+---
+nomad_job_vaultwarden:
+  affinity_attrib: "${meta.admin}"
+  affinity_value: "1"
+  affinity_operator: "!="
+  volumes:
+    - dir: /data/vaultwarden
+      container_dir: "/data"
+  service_ports:
+    - 8088
+
