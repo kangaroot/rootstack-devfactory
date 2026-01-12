@@ -5,8 +5,7 @@ Vagrant driver installation guide
 Requirements
 ============
 
-* Vagrant
-* Virtualbox, Parallels, VMware Fusion, VMware Workstation or VMware Desktop
+* podman
 
 Install
 =======
@@ -20,4 +19,11 @@ widely recommended `'--user' flag`_ when invoking ``pip``.
 
 .. code-block:: bash
 
-    $ pip install 'molecule_vagrant'
+    $ pip install 'molecule-plugins'
+
+Networks 
+========
+
+.. code-block:: bash
+  
+    $ podman network create --subnet 10.42.0.0/24 rootstack-net

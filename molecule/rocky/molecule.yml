@@ -12,6 +12,7 @@ platforms:
     image: rockylinux:9
     privileged: true
     systemd: always
+    network: rootstack-net
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     capabilities:
@@ -25,6 +26,8 @@ platforms:
       - nomad
       - loki_server
       - loki
+    extra_opts:
+      - --ip=10.42.0.2
   - <<: *rbase
     name: cluster2.test.sejo-it.be
     groups:
@@ -35,6 +38,8 @@ platforms:
       - loki
       - minio_client
       - grafana
+    extra_opts:
+      - --ip=10.42.0.3
   - <<: *rbase
     name: cluster3.test.sejo-it.be
     groups:
@@ -44,6 +49,8 @@ platforms:
       - minio_client
       - loki
       - prometheus
+    extra_opts:
+      - --ip=10.42.0.4
   - <<: *rbase
     name: cluster4.test.sejo-it.be
     groups:
@@ -51,6 +58,8 @@ platforms:
       - nomad
       - client
       - minio_client
+    extra_opts:
+      - --ip=10.42.0.5
   - <<: *rbase
     name: cluster5.test.sejo-it.be
     groups:
@@ -58,6 +67,8 @@ platforms:
       - client
       - nomad
       - minio_client
+    extra_opts:
+      - --ip=10.42.0.6
 provisioner:
   name: ansible
   env:
