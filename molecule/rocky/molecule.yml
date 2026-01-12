@@ -5,22 +5,18 @@
 dependency:
   name: galaxy
 driver:
-  name: vagrant
-  provider:
-    name: virtualbox
+  name: podman
 platforms:
-  - name: cluster1.test.sejo-it.be
-    box: rockylinux/8
-    memory: 1024
-    provider_raw_config_args:
-      - "customize ['modifyvm', :id, '--firmware', 'efi' ]"
-      - "customize ['createhd', '--filename', 'minioDisk.vdi', '--size', '5120']"
-      - "customize ['storageattach', :id,  '--storagectl',  'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', 'minioDisk.vdi']"
-    interfaces:
-      - network_name: private_network
-        type: static
-        ip: 10.42.0.2
-        auto_config: true
+  - &rbase
+    name: cluster1.test.sejo-it.be
+    image: rockylinux:9
+    privileged: true
+    systemd: always
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    capabilities:
+      - SYS_ADMIN
+    command: "/sbin/init"
     groups:
       - consul_node
       - admin
@@ -29,18 +25,8 @@ platforms:
       - nomad
       - loki_server
       - loki
-  - name: cluster2.test.sejo-it.be
-    box: rockylinux/8
-    memory: 1024
-    provider_raw_config_args:
-      - "customize ['modifyvm', :id, '--firmware', 'efi' ]"
-      - "customize ['createhd', '--filename', 'psqlDisk.vdi', '--size', '5120']"
-      - "customize ['storageattach', :id,  '--storagectl',  'IDE Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', 'psqlDisk.vdi']"
-    interfaces:
-      - network_name: private_network
-        type: static
-        ip: 10.42.0.3
-        auto_config: true
+  - <<: *rbase
+    name: cluster2.test.sejo-it.be
     groups:
       - consul_node
       - admin
@@ -49,16 +35,8 @@ platforms:
       - loki
       - minio_client
       - grafana
-  - name: cluster3.test.sejo-it.be
-    box: rockylinux/8
-    memory: 1024
-    provider_raw_config_args:
-      - "customize ['modifyvm', :id, '--firmware', 'efi' ]"
-    interfaces:
-      - network_name: private_network
-        type: static
-        ip: 10.42.0.4
-        auto_config: true
+  - <<: *rbase
+    name: cluster3.test.sejo-it.be
     groups:
       - consul_node
       - admin
@@ -66,31 +44,15 @@ platforms:
       - minio_client
       - loki
       - prometheus
-  - name: cluster4.test.sejo-it.be
-    box: rockylinux/8
-    memory: 1024
-    provider_raw_config_args:
-      - "customize ['modifyvm', :id, '--firmware', 'efi' ]"
-    interfaces:
-      - network_name: private_network
-        type: static
-        ip: 10.42.0.5
-        auto_config: true
+  - <<: *rbase
+    name: cluster4.test.sejo-it.be
     groups:
       - consul_node
       - nomad
       - client
       - minio_client
-  - name: cluster5.test.sejo-it.be
-    box: rockylinux/8
-    provider_raw_config_args:
-      - "customize ['modifyvm', :id, '--firmware', 'efi' ]"
-    memory: 1024
-    interfaces:
-      - network_name: private_network
-        type: static
-        ip: 10.42.0.6
-        auto_config: true
+  - <<: *rbase
+    name: cluster5.test.sejo-it.be
     groups:
       - consul_node
       - client

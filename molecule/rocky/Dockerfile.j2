@@ -1,0 +1,55 @@
+# Molecule managed
+
+{% if item.registry is defined %}
+FROM {% if item.platform is defined %}--platform={{ item.platform }}{% endif %} {{ item.registry.url }}/{{ item.image }} 
+{% else %}
+FROM {% if item.platform is defined %}--platform={{ item.platform }}{% endif %} {{ item.image }} 
+{% endif %}
+
+{% if item.env is defined %}
+{% for var, value in item.env.items() %}
+{% if value %}
+ENV {{ var }} {{ value }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if item.image.startswith('rockylinux') or item.image.startswith('redhat') %}
+
+RUN dnf -y install sudo procps openssh-server systemd && dnf clean all
+
+RUN ssh-keygen -q -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key -N '' && \
+  ssh-keygen -q -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -N '' && \
+  ssh-keygen -t dsa -f /etc/ssh/ssh_host_ed25519_key  -N '';
+
+{% elif item.image.startswith('debian') or item.image.startswith('ubuntu') %}
+
+RUN apt-get -y update && apt-get -y install sudo init systemd ssh python3 python3-debian && apt-get clean
+
+{% endif %}
+
+RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
+  systemd-tmpfiles-setup.service ] || rm -f $i; done); \
+  rm -f /lib/systemd/system/multi-user.target.wants/*;\
+  rm -f /etc/systemd/system/*.wants/*;\
+  rm -f /lib/systemd/system/local-fs.target.wants/*; \
+  rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
+  rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
+  rm -f /lib/systemd/system/basic.target.wants/*;\
+  rm -f /lib/systemd/system/anaconda.target.wants/*;
+
+RUN cd /lib/systemd/system/sysinit.target.wants; ln -s ../dbus-broker.service .
+
+{% if item.image.startswith('debian') or item.image.startswith('ubuntu') %}
+
+RUN cd /lib/systemd/system/sysinit.target.wants; ln -s ../sshd.service .
+
+{% endif %}
+
+VOLUME [ "/sys/fs/cgroup" ]
+{% if item.image.startswith('debian') and item.image.endswith('11') %}
+CMD ["/sbin/init"]
+{% else %}
+CMD ["/usr/sbin/init"]
+{% endif %}
+

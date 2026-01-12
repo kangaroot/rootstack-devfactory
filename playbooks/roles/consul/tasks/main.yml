@@ -6,7 +6,6 @@
   ansible.builtin.pip:
     name: python-consul
     state: latest
-    executable: /usr/bin/pip3
   become: true
 
 - name: check if consul is the correct version

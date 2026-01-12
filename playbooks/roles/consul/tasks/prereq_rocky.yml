@@ -1,8 +1,15 @@
 ---
-# there is not an ansible solution for yum-config-manager that I found.
-# as the key is not published easily I thought it would be easier to use a shell command.
 - name: set the repository for consul
-  ansible.builtin.command:
-    cmd: dnf config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
-  changed_when: false
+  ansible.builtin.get_url:
+    url: https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+    dest: /etc/yum.repos.d/hasticorp.repo
+    owner: root
+    group: root
   become: true
+- name: install packaging
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python3-packaging >= 20.9
+    - python3-pip >= 21.3
